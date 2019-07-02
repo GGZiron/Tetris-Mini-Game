@@ -6,7 +6,7 @@ module GGZiron_Tetris
                  About the Script:
  Author: GGZiron.
  Name: Tetris Mini Game
- Version 1.0
+ Version 1.0.1
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
@@ -19,8 +19,11 @@ module GGZiron_Tetris
 
  Version History
 
- 1.0 : Initial Release.
-
+ 1.0 : Initial Release on 02/07/2019.
+ 1.0.1: Released on 03/07/2019. 
+   *Fixed a typo I noticed in one of the strings.
+   *Removed two unnecessary operations I did in the Audio module.
+   
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
  last one is endless.
@@ -95,7 +98,7 @@ module GGZiron_Tetris
 # ===========================================================================
 
 # One way to run the Tetris is via the main menu, if playing Tetris from there
-# is enabled (it is by default, but can be changed in settings.
+# is enabled (it is by default, but can be changed in settings).
 
 # You can also run it with script call, using this:
 # scene = GGZiron_Tetris::Scene_Tetris
@@ -112,7 +115,7 @@ module GGZiron_Tetris
 #                         GENERAL OPTIONS
 # ===========================================================================
 
-  LINES_PER_LEVEL = 15 
+  LINES_PER_LEVEL = 15  
 # How many lines the player must clear for hardship level to increase.
    
   BEST_SCORES_TEXT_COLOR = 2
@@ -367,8 +370,8 @@ module GGZiron_Tetris
     :move_right    => :RIGHT, #RIGHT button used to move right.
     :drop          => :DOWN,  #DOWN button used to drop faster.
     :cw_rotate     => :UP,    #UP buton used to rotate clockwise.
-    :cw_rotate_alt => :L,     #L buton used alternatively to rotate clockwise.
-    :ccw_rotate    => :R,     #R buton used to rotate counter clockwise.
+    :cw_rotate_alt => :L,     #L button used alternatively to rotate clockwise.
+    :ccw_rotate    => :R,     #R button used to rotate counter clockwise.
     :pause         => :B      #B button used to pause the game. 
   }
 
@@ -377,9 +380,9 @@ module GGZiron_Tetris
 # RPG maker game can change in F1 options. If he/she do that, the control display
 # shown bellow will not anymore show correct info.
 # Instead keyboard keys, you could type their symbols, but then,
-# most users would have no idea which are those butons.
-# I still use keyboard controls in the default display I do not sure it is very 
-# wise. 
+# most users would have no idea which are those buttons.
+# I still use keyboard controls in the default display, but I am not sure it 
+# is very wise. 
 # On side not, the arrow keys, the F keys, SHIFT, CTR, ALT, are always the same.
 
 # I leave the decision to you what text to display, which is why I allow here in 
@@ -391,7 +394,7 @@ module GGZiron_Tetris
       0 => "Controls:",
       1 => " Esc: Pause",
       2 => "←→: Move",
-      3 => "  ↓: Fast Descent",
+      3 => "  ↓: Fast Descend",
       4 => "↑ Q: Rotate Clockwise",
       5 => "   W: Reverse Rotate",
  } 
@@ -422,8 +425,8 @@ module GGZiron_Tetris
 
 # Tetris Field window comes first.
 # That is the window where the game happens. Tetrominoes are spawned, moved
-# and cleared. This window will have only x and y and transparency settings.
-# Height and Width are deravative of the block's size, which you can modify
+# and cleared. This window will have only x, y and transparency settings.
+# Height and Width are derivatives of the block's size, which you can modify
 # in the settings above.
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -541,41 +544,41 @@ module GGZiron_Tetris
 # !!!Need to note here: the timer doesn't work during game over sequence or 
 # when the tetris is paused.
 #   tetris_data = GGZiron_Tetris
-#   $game_variable[3] = tetris_data.total_frames
+#   $game_variables[3] = tetris_data.total_frames
 
 # Extracting the game timer as text string, which could be used to display it 
 # somewhere
 #   tetris_data = GGZiron_Tetris
-#   $game_variable[4] = tetris_data.timer_to_string
+#   $game_variables[4] = tetris_data.timer_to_string
 #   !Not sure if good idea to store strings to Game Variables, but can be done.
  
 # Extracting the total time spent in seconds. To get the seconds, I divide
 # the total frames on the game frame rate. If game lags, the timer would work
 # slower than the timer on your system clock or any other watch.
 #   tetris_data = GGZiron_Tetris
-#   $game_variable[5] = tetris_data.total_seconds
+#   $game_variables[5] = tetris_data.total_seconds
 
 # Extracting the timer display seconds. Means it counts only the seconds
 # that passed after the last counted minute.
 #   tetris_data = GGZiron_Tetris
-#   $game_variable[6] = tetris_data.timer_seconds
+#   $game_variables[6] = tetris_data.timer_seconds
 
 # Extracting the total time spent in minutes. 
 #   tetris_data = GGZiron_Tetris
-#   $game_variable[7] = tetris_data.total_minutes
+#   $game_variables[7] = tetris_data.total_minutes
 
 # Extracting the timer display minutes. Means it counts only the minutes
 # that passed after the last counted hour.
 #   tetris_data = GGZiron_Tetris
-#   $game_variable[8] = tetris_data.timer_minutes
+#   $game_variables[8] = tetris_data.timer_minutes
 
 # Extracting the total hours played. Spending 0:59:59 still returns 0 hours.
 #   tetris_data = GGZiron_Tetris
-#   $game_variable[9] = tetris_data.hours_spent
+#   $game_variables[9] = tetris_data.hours_spent
   
 # Extracting player's number of action only for the last game:
 #   tetris_data = GGZiron_Tetris
-#   $game_variable[10] = tetris_data.actions
+#   $game_variables[10] = tetris_data.actions
 #  Counts only succeseful moves.
 #  It doen't count the fast drop.
   
@@ -1798,7 +1801,6 @@ module Audio
     
     def start_prev_bgm
       return if !@file_ggz25667
-      @volume_ggz25667 ||= 0; @pitch_ggz25667 ||= 0
       bgm_play(@file_ggz25667, @volume_ggz25667, @pitch_ggz25667)
     end  
     
@@ -1821,7 +1823,6 @@ module Audio
     
     def start_prev_bgs
       return if !@file_bgs_ggz25667
-      @volume_bgs_ggz25667 ||= 0; @pitch_bgs_ggz25667 ||= 0
       bgs_play(@file_bgs_ggz25667, @volume_bgs_ggz25667, @pitch_bgs_ggz25667)
     end 
     
