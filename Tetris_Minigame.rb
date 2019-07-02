@@ -6,7 +6,7 @@ module GGZiron_Tetris
                  About the Script:
  Author: GGZiron.
  Name: Tetris Mini Game
- Version 1.0.1
+ Version 1.0.2
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
@@ -23,6 +23,9 @@ module GGZiron_Tetris
  1.0.1: Released on 03/07/2019. 
    *Fixed a typo I noticed in one of the strings.
    *Removed two unnecessary operations I did in the Audio module.
+ 1.0.2: Released on 03/07/2019
+   *Readded the "unncecessary" operations, and fixed an issue they had
+    in initial version.
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
@@ -991,8 +994,8 @@ module GGZiron_Tetris
       @pause_window.visible                  = false
       super
       Audio.bgm_stop_ggz25667
-      Audio.start_prev_bgm
-      Audio.start_prev_bgs
+      Audio.start_prev_bgm_ggz25667
+      Audio.start_prev_bgs_ggz25667
     end 
     
     def update_timer?
@@ -1799,8 +1802,9 @@ module Audio
       bgm_fade_ggz25667(*args)
     end
     
-    def start_prev_bgm
+    def start_prev_bgm_ggz25667
       return if !@file_ggz25667
+      @volume_ggz25667 ||= 100; @pitch_ggz25667 ||= 100
       bgm_play(@file_ggz25667, @volume_ggz25667, @pitch_ggz25667)
     end  
     
@@ -1821,8 +1825,9 @@ module Audio
       bgs_fade_ggz25667(*args)
     end
     
-    def start_prev_bgs
+    def start_prev_bgs_ggz25667
       return if !@file_bgs_ggz25667
+      @volume_bgs_ggz25667 ||= 100; @pitch_bgs_ggz25667 ||= 100
       bgs_play(@file_bgs_ggz25667, @volume_bgs_ggz25667, @pitch_bgs_ggz25667)
     end 
     
