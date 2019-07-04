@@ -6,7 +6,8 @@ module GGZiron_Tetris
                  About the Script:
  Author: GGZiron.
  Name: Tetris Mini Game
- Version 1.0.3
+ Engine: RPG Maker VX ACE
+ Version 1.0.4
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
@@ -29,6 +30,9 @@ module GGZiron_Tetris
    *Fixed new possible issues with the Audio module.
    *Fixed an issue where clearing the required number of lines sometimes 
     would not increase the hardship level.
+ 1.0.4: Released on 04/07/2019
+   *Now disposing properly a lot of graphical objects, which it wasn't
+    previously. Found about it while using Mithran's debugger script.
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
@@ -97,7 +101,6 @@ module GGZiron_Tetris
  
 =end
   
-
 # ===========================================================================
 #                            WAY TO USE:
 # ===========================================================================
@@ -821,7 +824,7 @@ module GGZiron_Tetris
       @field = Array.new
       for x in 0..(@columns-1) do  #x may represent row, but is column walker
         @field << Array.new
-        for y in 0..(@rows-1) do  #y represent column, but is row walker
+        for y in 0...@rows do  #y represent column, but is row walker
           @field[x] << Building_Block.new(@viewport)
           @field[x][y].x = x
           @field[x][y].y = y
@@ -831,8 +834,8 @@ module GGZiron_Tetris
     end
     
     def clear_field
-      for x in 0..(@columns-1) do 
-        for y in 0..(@rows-1) do
+      for x in 0...@columns do 
+        for y in 0...@rows do
           @field[x][y].value = 0;
           @field[x][y].on_fall = false
         end
@@ -851,8 +854,8 @@ module GGZiron_Tetris
     end 
     
     def delete_field
-      for x in 0..(@colums-1) do
-        for y in 0..(@rows-1) do
+      for x in 0...@columns do
+        for y in 0...@rows do
           @field[x][y].dispose
         end  
       end
@@ -989,11 +992,14 @@ module GGZiron_Tetris
     def return_scene
       GGZiron_Tetris.exit_scene
       @tetris_window.field.viewport.visible  = false
+   	  @tetris_window.field.delete_field
       @tetris_window.visible                 = false
       @window_block_1.field.viewport.visible = false
+      @window_block_1.field.delete_field
       @window_block_1.visible                = false
       @window_block_2.visible                = false
       @pause_window.visible                  = false
+      @background.dispose
       super
       Audio.bgm_stop_ggz25667
       Audio.start_prev_bgm_ggz25667
