@@ -19,7 +19,7 @@ module GGZiron_Tetris
  RPG Maker forum, or pm me.
  
  Version History
- 1.0 : Initial Release on 02/07/2019.
+ 1.0.0: Initial Release on 02/07/2019.
  1.0.1: Released on 03/07/2019. 
    *Fixed a typo I noticed in one of the strings.
    *Removed two unnecessary operations I did in the Audio module.
