@@ -6,7 +6,7 @@ module GGZiron_Tetris
                  About the Script:
  Author: GGZiron.
  Name: Tetris Mini Game
- Version 1.0.2
+ Version 1.0.3
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
@@ -16,9 +16,8 @@ module GGZiron_Tetris
  
  If you see any bug, or have suggestion, you can post on this script thread on
  RPG Maker forum, or pm me.
-
+ 
  Version History
-
  1.0 : Initial Release on 02/07/2019.
  1.0.1: Released on 03/07/2019. 
    *Fixed a typo I noticed in one of the strings.
@@ -26,6 +25,10 @@ module GGZiron_Tetris
  1.0.2: Released on 03/07/2019
    *Readded the "unncecessary" operations, and fixed an issue they had
     in initial version.
+ 1.0.3: Released on 04/07/2019
+   *Fixed new possible issues with the Audio module.
+   *Fixed an issue where clearing the required number of lines sometimes 
+    would not increase the hardship level.
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
@@ -47,7 +50,6 @@ module GGZiron_Tetris
  the Tetris Minigame. That very needed to be able to restore them once player
  exit tetris. It might not go well with other scripts that are playing with the 
  audio. 
-
  Some additional information about my tetris:
  
  As clasical Tetris, it has 9 levels, and the last one is endless.
@@ -118,7 +120,7 @@ module GGZiron_Tetris
 #                         GENERAL OPTIONS
 # ===========================================================================
 
-  LINES_PER_LEVEL = 15  
+  LINES_PER_LEVEL = 15 
 # How many lines the player must clear for hardship level to increase.
    
   BEST_SCORES_TEXT_COLOR = 2
@@ -702,6 +704,7 @@ module GGZiron_Tetris
     def delete_line
       @deleted_lines += 1
       @total_deleted_lines += 1
+      add_level if (@deleted_lines % LINES_PER_LEVEL == 0 && @level < 9)
       refresh_stats
     end  
       
@@ -732,7 +735,6 @@ module GGZiron_Tetris
         when 4; reward *= 8  
       end
       self.scores += reward
-      add_level if (@deleted_lines % LINES_PER_LEVEL == 0 && @level < 9)
     end  
     
     def extract_save_data(contents)
@@ -1787,8 +1789,8 @@ module Audio
     
     def bgm_play(*args)
       @file_ggz25667 = args[0] 
-      @volume_ggz25667 = args[1] if args[1]
-      @pitch_ggz25667 = args[2]  if args[2]
+      @volume_ggz25667 = (args[1]) ? args[1] : 100
+      @pitch_ggz25667  = (args[2]) ? args[2] : 100
       bgm_play_ggz25667(*args)
     end 
   
@@ -1809,9 +1811,9 @@ module Audio
     end  
     
     def bgs_play(*args)
-      @file_bgs_ggz25667 = args[0] #ggz25667 part of name is so i avoid name clash
-      @volume_bgs_ggz25667 = args[1] if args[1]
-      @pitch_bgs_ggz25667 = args[2]  if args[2]
+      @file_bgs_ggz25667 = args[0]
+      @volume_bgs_ggz25667 = (args[1]) ?  args[1] : 100
+      @pitch_bgs_ggz25667 = (args[2]) ? args[2] : 100
       bgs_play_ggz25667(*args)
     end 
   
@@ -1836,4 +1838,4 @@ module Audio
 end #Audio
 # ===========================================================================
 #                         END OF FILE
-# ===========================================================================  
+# =========================================================================== 
