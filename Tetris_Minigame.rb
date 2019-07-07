@@ -36,7 +36,7 @@ module GGZiron_Tetris
    *Performance update. In previous version, all stats (level, deleted lines,
     scores, etc) were redrawn whenever one of them changes, causing some lag.
     Now, it redraws only the part that needs to be redrawn, as it should be.
-    Also altered some methods way of work.
+    Did other improvements too.
     
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
