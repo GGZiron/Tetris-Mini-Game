@@ -1,5 +1,4 @@
 ($imported ||= {})[:GGZiron_Tetris] = true
-
 module GGZiron_Tetris
   
 =begin
@@ -7,7 +6,7 @@ module GGZiron_Tetris
  Author: GGZiron.
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
- Version 1.0.4
+ Version 1.0.5
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
@@ -33,7 +32,12 @@ module GGZiron_Tetris
  1.0.4: Released on 04/07/2019
    *Now disposing properly a lot of graphical objects, which it wasn't
     previously. Found about it while using Mithran's debugger script.
-   
+ 1.0.5: Released on 07/07/2019
+   *Performance update. In previous version, all stats (level, deleted lines,
+    scores, etc) were redrawn whenever one of them changes, causing some lag.
+    Now, it redraws only the part that needs to be redrawn, as it should be.
+    Also altered some methods way of work.
+    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
  last one is endless.
@@ -123,7 +127,7 @@ module GGZiron_Tetris
 #                         GENERAL OPTIONS
 # ===========================================================================
 
-  LINES_PER_LEVEL = 15 
+  LINES_PER_LEVEL = 15
 # How many lines the player must clear for hardship level to increase.
    
   BEST_SCORES_TEXT_COLOR = 2
@@ -193,6 +197,7 @@ module GGZiron_Tetris
 # Each Piece on Tetris has own color. The empty space in the field also have 
 # own color. The background behind the field also have color.
 # Here you can set the values for all those colors.
+# Valid values are between 0 and 255
 
         
   COLORS ={
@@ -341,18 +346,18 @@ module GGZiron_Tetris
 # There are 1000 miliseconds in one second.
   
   SOUNDS = {
-    1 => { :file =>'Audio/SE/Cursor2',   :volume => 100, :pitch => 100},
     #Entry 1 -> Move Sound
-    2 => { :file =>'Audio/SE/Cursor2',   :volume => 100, :pitch => 100},
+    1 => { :file =>'Audio/SE/Cursor2',   :volume => 100, :pitch => 100},
     #Entry 2 -> Rotate Sound
-    3 => { :file =>'Audio/SE/Knock',     :volume => 100, :pitch => 100},
+    2 => { :file =>'Audio/SE/Cursor2',   :volume => 100, :pitch => 100},
     #Entry 3 -> Clash Sound
-    4 => { :file =>'Audio/SE/Decision2', :volume => 100, :pitch => 100},
+    3 => { :file =>'Audio/SE/Knock',     :volume => 100, :pitch => 100},
     #Entry 4 -> Delete Line Sound
-    5 => { :file =>'Audio/SE/Decision1', :volume => 100, :pitch => 100},
+    4 => { :file =>'Audio/SE/Decision2', :volume => 100, :pitch => 100},
     #Entry 5 -> Pause Game Sound
-    6 => { :file =>'Audio/SE/Decision1', :volume => 100, :pitch => 100},
+    5 => { :file =>'Audio/SE/Decision1', :volume => 100, :pitch => 100},
     #Entry 6 -> Unpause Sound
+    6 => { :file =>'Audio/SE/Decision1', :volume => 100, :pitch => 100},
    }
 # Edit the sound effect files according your preference.
 # You can comment the lines, that contain sound effect for events you don't 
@@ -639,7 +644,7 @@ module GGZiron_Tetris
     def add_action(value = 1)
       @actions += value
       @total_actions += value
-      refresh_stats
+      window_info.update_actions
     end  
       
     def play_bgm( position = 0)
@@ -677,8 +682,11 @@ module GGZiron_Tetris
     def scores=(value)
       @scores = value
       @new_record = true if @best_scores < @scores && !@new_record
-      @best_scores = @scores if @best_scores < @scores
-      refresh_stats
+      if @best_scores < @scores
+         @best_scores = @scores 
+         window_info.update_best_scores
+      end
+      window_info.update_scores 
     end
       
     def end_game
@@ -708,13 +716,13 @@ module GGZiron_Tetris
       @deleted_lines += 1
       @total_deleted_lines += 1
       add_level if (@deleted_lines % LINES_PER_LEVEL == 0 && @level < 9)
-      refresh_stats
+      window_info.update_cleared_lines
     end  
       
     def add_level
       @level += 1
       set_speed
-      refresh_stats
+      window_info.update_level
       change_bgm
     end 
     
@@ -727,8 +735,8 @@ module GGZiron_Tetris
     end  
       
     def refresh_stats
-      @window_info.refresh_stats
-    end  
+      @window_info.draw_stats
+    end 
        
     def deleted_lines_reward(deleted_lines)
       reward = 100 * @level
@@ -799,7 +807,7 @@ module GGZiron_Tetris
     
     def take_row(row_index = 0)
       row = Array.new
-      for i in 0..(@columns-1) do row << @field[i][row_index]; end  
+      for i in 0...@columns do row << @field[i][row_index]; end  
       row
     end  
     
@@ -822,7 +830,7 @@ module GGZiron_Tetris
     
     def tetris_bitmap
       @field = Array.new
-      for x in 0..(@columns-1) do  #x may represent row, but is column walker
+      for x in 0...@columns do  #x may represent row, but is column walker
         @field << Array.new
         for y in 0...@rows do  #y represent column, but is row walker
           @field[x] << Building_Block.new(@viewport)
@@ -869,7 +877,7 @@ module GGZiron_Tetris
     
   end #Tetris_Field
   
-  class Scene_Tetris < Scene_MenuBase
+  class Scene_Tetris < Scene_Base
   
     def start
       set_internal_clock
@@ -930,24 +938,28 @@ module GGZiron_Tetris
         @background.bitmap.fill_rect( @background.bitmap.rect, color)
       end
     end  
-    
+	
+    def create_tetris_window
+      @tetris_window = Window_TetrisField.new(@window_block_1)
+      @tetris_window.set_handler(:paused, method(:pause_tetris))
+    end
+	
+    def create_block_1_window
+      @window_block_1 = Window_Block1.new
+      GGZiron_Tetris.window_info = @window_block_1
+    end
+	
+    def create_block_2_window
+      @window_block_2 = Window_Block2.new
+      @window_block_2.set_handler( method(:game_over2) )
+    end  
+  
     def play_intro_bgm
       @internal_clock = -1
       file   = BACKGROUND_MUSIC[:intro]
       Audio.bgm_play_ggz25667(file[:file], file[:volume], file[:pitch]) if file
     end
-
-  
-    def create_tetris_window
-      @tetris_window = Window_TetrisField.new(@window_block_1)
-      @tetris_window.set_handler(:paused, method(:pause_tetris))
-    end 
-  
-    def create_block_1_window
-      @window_block_1 = Window_Block1.new
-      GGZiron_Tetris.window_info = @window_block_1
-    end
-    
+ 
     def game_over?
       return false if !@tetris_window
       return true if   @tetris_window.tetromino \
@@ -959,12 +971,7 @@ module GGZiron_Tetris
       @tetris_window.clear_field
       prep_new_game
     end  
-  
-    def create_block_2_window
-      @window_block_2 = Window_Block2.new
-      @window_block_2.set_handler( method(:game_over2) )
-    end  
-  
+
     def game_over1
       GGZiron_Tetris.set_pause
       play_gameover
@@ -985,23 +992,19 @@ module GGZiron_Tetris
       @tetris_window.refresh
       @internal_clock -= 1 if @internal_clock > 0
       play_intro_bgm if @internal_clock == 0
-      if update_timer?; @window_block_1.refresh_stats; update_timer; end 
+      if update_timer?; @window_block_1.update_timer; update_timer; end 
       game_over1 if !GGZiron_Tetris.pause && game_over?
     end 
   
     def return_scene
       GGZiron_Tetris.exit_scene
-      @tetris_window.field.viewport.visible  = false
    	  @tetris_window.field.delete_field
-      @tetris_window.visible                 = false
-      @window_block_1.field.viewport.visible = false
+      @tetris_window.field.viewport.dispose
       @window_block_1.field.delete_field
-      @window_block_1.visible                = false
-      @window_block_2.visible                = false
-      @pause_window.visible                  = false
+      @window_block_1.field.viewport.dispose
       @background.dispose
+	  Audio.bgm_stop_ggz25667
       super
-      Audio.bgm_stop_ggz25667
       Audio.start_prev_bgm_ggz25667
       Audio.start_prev_bgs_ggz25667
     end 
@@ -1038,7 +1041,7 @@ module GGZiron_Tetris
       super(x, y, w, h)
       self.opacity = GGZiron_Tetris::TETRIS_FIELD[:T]
       @tetris_next = tetris_next
-      tetris_bitmap(x+5, y+5, 100) #, w-10, h -10)
+      tetris_bitmap(x+5, y+5, 100)
       @deleted_rows = Array.new
       @erase_row_flag = -1
       @spawned = false
@@ -1190,11 +1193,9 @@ module GGZiron_Tetris
       h = GGZiron_Tetris::WINDOW_BLOCK_1[:H]
       super(x, y, w, h)
       self.opacity = GGZiron_Tetris::WINDOW_BLOCK_1[:T]
-      color = text_color(20)
-      change_color(color)
       create_field
       create_spawning_bag
-      refresh_stats
+      draw_stats
     end  
   
     def create_field
@@ -1228,33 +1229,101 @@ module GGZiron_Tetris
       clear_tetromino
       define_next_spawn
     end  
-
-    def refresh_stats
-      vocab = GGZiron_Tetris::VOCAB
-      symb_add = vocab[:added_symbol]
-      contents.clear
-      contents.font.size = GGZiron_Tetris::WINDOW_BLOCK_1[:FS]
+    
+    def symb_add
+       GGZiron_Tetris::VOCAB[:added_symbol]
+    end  
+	
+	def initial_y
+      block_size * 4
+	end
+	
+	def line_distance
+	  GGZiron_Tetris::WINDOW_BLOCK_1[:LD]
+	end
+	
+    def update_level(init = true)
+      vocab = GGZiron_Tetris::VOCAB[:level]
+      str_1 = vocab + symb_add; str_2 = level
+      width = text_size(str_1).width
+      clwidth = text_size(str_2 + "0").width
+      height = text_size(str_1).height
+      contents.clear_rect(width, initial_y, width, height) 
+      draw_text_ex(0, initial_y, str_1) if init
+      draw_text_ex(width, initial_y, str_2)
+    end  
+    
+    def update_actions(init = false)
+      vocab = GGZiron_Tetris::VOCAB[:actions]
+      str_1 = vocab + symb_add; str_2 = actions
+      width = text_size(str_1).width
+      clwidth = text_size(str_2 + "0").width
+      height = text_size(str_1).height
+      contents.clear_rect(width, initial_y + line_distance, clwidth, height) 
+      draw_text_ex(0, initial_y + line_distance, str_1) if init
+      draw_text_ex(width, initial_y + line_distance, str_2)
+    end  
+    
+    def update_cleared_lines(init = false)
+      vocab = GGZiron_Tetris::VOCAB[:cleared_lines]
+      str_1 = vocab + symb_add; str_2 = deleted_lines
+      width = text_size(str_1).width
+      clwidth = text_size(str_2 + "0").width
+      height = text_size(str_1).height
+      contents.clear_rect(width, initial_y + line_distance * 2, clwidth, height)
+      draw_text_ex(0, initial_y + line_distance * 2, str_1) if init
+      draw_text_ex(width, initial_y + line_distance * 2, str_2)
+    end  
+    
+    def update_scores(init = false)
+      vocab = GGZiron_Tetris::VOCAB[:scores]
+      str_1 = vocab + symb_add; str_2 = scores.to_s
+      width = text_size(str_1).width
+      clwidth = text_size(str_2 + "0").width
+      height = text_size(str_1).height
+      contents.clear_rect(width, initial_y + line_distance * 3, clwidth, height) 
+      draw_text_ex(0, initial_y + line_distance * 3, str_1) if init
+      contents.font.color = text_color(best_scores_color) if GGZiron_Tetris.new_record?
+      width = text_size(str_1).width
+      draw_text_ex(width, initial_y + line_distance * 3, str_2)
       contents.font.color = normal_color
-      line_distance = GGZiron_Tetris::WINDOW_BLOCK_1[:LD]
-      draw_text_ex(0, 0, vocab[:next_tetro] + symb_add)
-      initial_y = block_size * 4
-      draw_text_ex(0, initial_y, vocab[:level] + symb_add + level)
-      draw_text_ex(0, initial_y + line_distance, vocab[:actions] + symb_add + actions)
-      draw_text_ex(0, initial_y + line_distance * 2 , 
-      vocab[:cleared_lines] + symb_add + deleted_lines)
+    end  
+    
+    def update_best_scores(init = false)
+      vocab = GGZiron_Tetris::VOCAB[:best_scores]
+      str_1 = vocab + symb_add; str_2 = best_scores.to_s
+      width = text_size(str_1).width
+      clwidth = text_size(str_2 + "0").width
+      height = text_size(str_1).height
+      contents.clear_rect(width, initial_y + line_distance * 4, clwidth, height) 
+      draw_text_ex(0, initial_y + line_distance * 4, str_1) if init
+      contents.font.color = text_color(best_scores_color) if GGZiron_Tetris.new_record?
+      width = text_size(str_1).width
+      draw_text_ex(width, initial_y + line_distance * 4, str_2)
+      contents.font.color = normal_color
+    end  
+    
+    def update_timer(init = false)
+      vocab = GGZiron_Tetris::VOCAB[:timer]
+      str_1 = vocab + symb_add
+      str_2 = GGZiron_Tetris.timer_to_string
+      width = text_size(str_1).width
+      clwidth = text_size(str_2 + "0").width
+      height = text_size(str_1).height
+      contents.clear_rect(width, initial_y + line_distance * 5, clwidth, height)
+      draw_text_ex(0, initial_y + line_distance* 5, str_1) if init
+      width = text_size(vocab + symb_add).width
+      draw_text_ex(width, initial_y + line_distance * 5, str_2)
+    end  
+        
+    def draw_stats
+      contents.font.size  = GGZiron_Tetris::WINDOW_BLOCK_1[:FS]
+	  vocab = GGZiron_Tetris::VOCAB
+      contents.font.color = normal_color
+      draw_text_ex(0, 0, vocab[:next_tetro] + vocab[:added_symbol])
       
-      draw_text_ex(0, initial_y + line_distance * 3, vocab[:scores] + symb_add)
-      contents.font.color = text_color(best_scores_color) if GGZiron_Tetris.new_record?
-      text_width = text_size(vocab[:scores] + symb_add).width
-      draw_text_ex(text_width, initial_y + line_distance * 3, scores.to_s)
-      contents.font.color = normal_color
-      draw_text_ex(0, initial_y + line_distance * 4, vocab[:best_scores] + symb_add)
-      contents.font.color = text_color(best_scores_color) if GGZiron_Tetris.new_record?
-      text_width = text_size(vocab[:best_scores] + symb_add).width 
-      draw_text_ex(text_width, initial_y + line_distance * 4, best_scores.to_s)
-      contents.font.color = normal_color
-      draw_text_ex(0, initial_y + line_distance * 5, 
-      vocab[:timer] + symb_add  + GGZiron_Tetris.timer_to_string)
+      update_level(true);  update_actions(true);     update_cleared_lines(true)
+      update_scores(true); update_best_scores(true); update_timer(true)
     end  
     
     def define_next_spawn
@@ -1265,14 +1334,14 @@ module GGZiron_Tetris
       @field.display_tetromino(type)
     end  
       
-    def clear_spawning_bag; @spawning_bag = [];                    end   
+    def clear_spawning_bag; @spawning_bag = [];                    end
     def best_scores_color; GGZiron_Tetris::BEST_SCORES_TEXT_COLOR; end
     def reset_font_settings;                                       end
-    def actions; GGZiron_Tetris.actions.to_s;                      end    
-    def level; GGZiron_Tetris.level.to_s;                          end 
+    def actions; GGZiron_Tetris.actions.to_s;                      end
+    def level; GGZiron_Tetris.level.to_s;                          end
     def scores; GGZiron_Tetris.scores;                             end
     def best_scores; GGZiron_Tetris.best_scores;                   end
-    def deleted_lines; GGZiron_Tetris.deleted_lines.to_s;          end      
+    def deleted_lines; GGZiron_Tetris.deleted_lines.to_s;          end
   
   end #Window_Block1 
   
@@ -1422,22 +1491,25 @@ module GGZiron_Tetris
     
     attr_reader :game_over_flag, :type
     
-    def initialize( field,  type)
+    def initialize(field,  type)
       @game_over_flag = false
       @field = field
       @tetromino_blocks = Array.new(4)
       @type = type
       @type = 1 + rand(7) if @type == 0
+      @base ||= { :x =>1, :y=>2 }
+      @base[:y] -= 1 if @type == 4
     end
     
-    def spawn
+    def spawn(spawning = true)
+      @spawning = spawning
       case @type
         when 1; spawn_o; when 2; spawn_l
         when 3; spawn_j; when 4; spawn_i
         when 5; spawn_s; when 6; spawn_t;
         when 7; spawn_z;  
-      end  
-      @tetromino_blocks.sort! {|a, b| b.y <=> a.y}  
+      end
+      @spawning = false
     end 
     
     def block(x ,y)
@@ -1446,90 +1518,63 @@ module GGZiron_Tetris
     
     def assign_block(index, x, y)
       @tetromino_blocks[index] = block(x, y)
-      @game_over_flag = !can_spawn?(x, y) || @game_over_flag
+      @game_over_flag = (!can_spawn?(x, y) && @spawning) || @game_over_flag
       @tetromino_blocks[index].value = @type
       @tetromino_blocks[index].on_fall = true
     end 
     
-    def spawn_o(x_offset = 0, y_offset = 0)
-      counter = 0
-      for x in ( 1 + x_offset )..( 2 + x_offset ) do
-        for y in ( 1 + y_offset)..( 2 + y_offset) do
-          assign_block(counter, x, y)
-          counter+=1
-        end
-      end
+    def spawn_o
+      assign_block(0, @base[:x],     @base[:y] - 1); 
+      assign_block(1, @base[:x],     @base[:y]    );
+      assign_block(2, @base[:x] + 1, @base[:y] - 1);
+      assign_block(3, @base[:x] + 1, @base[:y]    );
     end
      
-    def spawn_l(x_offset = 0, y_offset = 0)
-      counter = 0 
-      for x in ( 0 + x_offset )..( 2 + x_offset ) do  #3, 5
-        for y in ( 1 + y_offset)..( 2 + y_offset) do
-          next if y == (1 + y_offset) && (x < 2 + x_offset)
-          assign_block(counter, x, y)
-          counter+=1
-        end
-      end
+    def spawn_l(position = 1)
+      assign_block(0, @base[:x] + 1, @base[:y] - 1); 
+      assign_block(1, @base[:x] - 1, @base[:y]    );
+      assign_block(2, @base[:x],     @base[:y]    );
+      assign_block(3, @base[:x] + 1, @base[:y]    );
     end
     
-    def spawn_j(x_offset = 0, y_offset = 0)
-      counter = 0 
-      for x in ( 0 + x_offset )..( 2 + x_offset ) do
-        for y in ( 1 + y_offset)..( 2 + y_offset) do
-          next if (y == 1 + y_offset) && x > (0 + x_offset)
-          assign_block(counter, x, y)
-          counter+=1
-        end
-      end
+    def spawn_j(position = 1)
+      assign_block(0, @base[:x] - 1, @base[:y] - 1); 
+      assign_block(1, @base[:x] - 1, @base[:y]    );
+      assign_block(2, @base[:x],     @base[:y]    );
+      assign_block(3, @base[:x] + 1, @base[:y]    );
     end
     
-    def spawn_i(x_offset = 0, y_offset = 0)
-      counter = 0; y = 1 + y_offset
-      for x in ( 0 + x_offset )..( 3 + x_offset ) do
-        assign_block(counter, x, y)
-        counter+=1
-      end
+    def spawn_i(position = 1)
+      assign_block(0, @base[:x] - 1, @base[:y]    ); 
+      assign_block(1, @base[:x],     @base[:y]    );
+      assign_block(2, @base[:x] + 1, @base[:y]    );
+      assign_block(3, @base[:x] + 2, @base[:y]    );
     end
     
-    def spawn_s(x_offset = 0, y_offset = 0)
-      counter = 0 
-      for x in ( 0 + x_offset )..( 2 + x_offset ) do
-        for y in ( 1 + y_offset)..( 2 + y_offset) do
-          next if y == (1 + y_offset) && x == (0 + x_offset)
-          next if y == (2 + y_offset)  && x == (2 + x_offset)
-           assign_block(counter, x, y)
-           counter+=1
-        end
-      end
+    def spawn_s(position = 1)
+      assign_block(0, @base[:x],     @base[:y] - 1); 
+      assign_block(1, @base[:x] + 1, @base[:y] - 1);
+      assign_block(2, @base[:x] - 1, @base[:y]    );
+      assign_block(3, @base[:x],     @base[:y]    );
     end
     
-    def spawn_t(x_offset = 0, y_offset = 0)
-      counter = 0 
-      for x in ( 0 + x_offset )..( 2 + x_offset ) do
-        for y in ( 1 + y_offset)..( 2 + y_offset) do
-          next if y == (1 + y_offset) && x != (1 + x_offset)
-          assign_block(counter, x, y)
-          counter+=1
-        end
-      end
+    def spawn_t(position = 1)
+      assign_block(0, @base[:x],     @base[:y] - 1); 
+      assign_block(1, @base[:x] - 1, @base[:y]    );
+      assign_block(2, @base[:x],     @base[:y]    );
+      assign_block(3, @base[:x] + 1, @base[:y]    );
     end
     
-    def spawn_z(x_offset = 0, y_offset = 0)
-      counter = 0 
-      for x in ( 0 + x_offset )..( 2 + x_offset ) do
-        for y in ( 1 + y_offset)..( 2 + y_offset) do
-          next if y == (1 + y_offset) && x == (2 + x_offset)
-          next if y == (2 + y_offset) && x == (0 + x_offset)
-          assign_block(counter, x, y)
-          counter+=1
-        end
-      end
+    def spawn_z(position = 1)
+      assign_block(0, @base[:x] - 1, @base[:y] - 1); 
+      assign_block(1, @base[:x],     @base[:y] - 1);
+      assign_block(2, @base[:x],     @base[:y]    );
+      assign_block(3, @base[:x] + 1, @base[:y]    );
     end
     
     def can_spawn?(x, y)
       !(block(x, y).value > 0)
     end  
-    
 
     def clear_tetromino
       for i in 0..3 do
@@ -1543,71 +1588,43 @@ module GGZiron_Tetris
     
     def initialize(rows, type)
       @rows = rows
-      super
       @base = { :x =>4, :y=>1 }
+      super
     end
     
     def block(x, y)
       @rows[y].blocks[x]
     end 
     
-    def spawn
-      case @type
-        when 1; spawn_o(3, -1); when 2; spawn_l(3, -1)
-        when 3; spawn_j(3, -1); when 4; spawn_i(3, -1)
-        when 5; spawn_s(3, -1); when 6; spawn_t(3, -1);
-        when 7; spawn_z(3, -1);  
-      end
-      @tetromino_blocks.sort! {|a, b| b.y <=> a.y}
-    end
-    
-    def spawn_i(x_offset = 0, y_offset = 0)
-      super(x_offset, y_offset)
-      @base = { :x =>4, :y=>0 }
-    end
-    
     def move_left(tetromino = @tetromino_blocks)
-      tetromino.sort! {|a, b| a.x <=> b.x}
       move(-1, 0, tetromino)
     end
     
     def move_right(tetromino = @tetromino_blocks)
-      tetromino.sort! {|a, b| b.x <=> a.x}
       return move(1, 0, tetromino)
     end  
     
     def move_down(tetromino = @tetromino_blocks)
-      tetromino.sort! {|a, b| b.y <=> a.y}
       return move(0, 1, tetromino)
     end  
     
     def move_up(tetromino = @tetromino_blocks)
-      tetromino.sort! {|a, b| a.y <=> b.y}
       return move(0, -1, tetromino)
     end 
     
-    
     def move(x_offset, y_offset, tetromino = @tetromino_blocks)
-      return false if !can_move?(x_offset, y_offset, tetromino)
+      return false unless can_move?(x_offset, y_offset, tetromino)
       @base[:x] += x_offset; @base[:y] += y_offset
+      clear_tetromino
       for i in 0...tetromino.size do
         x = tetromino[i].x
         y = tetromino[i].y
-        value = tetromino[i].value
-        tetromino[i].value = 0
-        tetromino[i].on_fall = false
         tetromino[i] = block(x + x_offset, y + y_offset)
-        tetromino[i].value = value
+        tetromino[i].value = @type
         tetromino[i].on_fall = true
       end
       true
     end  
-
-    def clear_tetronom
-      for i in 0..3 do
-        @tetromino_blocks[i].value = 0; @tetromino_blocks[i].on_fall = false
-      end  
-    end
     
     def assign_squares(new_shape)
       @tetromino_blocks = new_shape
@@ -1687,7 +1704,7 @@ module GGZiron_Tetris
        GGZiron_Tetris.play_sound(3) if !@rows[19].row_full?
     end  
 	
-	def rotate_clockwise; rotate(1);          end     
+	  def rotate_clockwise; rotate(1);          end     
     def rotate_counter_clockwise; rotate(-1); end 
     def fall; move_down;                      end  
     def can_fall?; can_move?(0, 1);           end
@@ -1700,7 +1717,7 @@ module GGZiron_Tetris
     
     def value=(value)
       @value = value
-      @value = 0 if @value < 0 || @value > 7
+      @value = 0 unless @value.between?(0 ,7)
       color = GGZiron_Tetris.generate_color(GGZiron_Tetris::COLORS[@value])
       @sprite.bitmap.fill_rect( @sprite.bitmap.rect, color)
     end  
@@ -1836,7 +1853,7 @@ module Audio
     def start_prev_bgs_ggz25667
       return if !@file_bgs_ggz25667
       @volume_bgs_ggz25667 ||= 100; @pitch_bgs_ggz25667 ||= 100
-      bgs_play(@file_bgs_ggz25667, @volume_bgs_ggz25667, @pitch_bgs_ggz25667)
+      bgs_play(@file_bgs_ggz25667,  @volume_bgs_ggz25667, @pitch_bgs_ggz25667)
     end 
     
   end  #class << self
