@@ -6,7 +6,7 @@ module GGZiron_Tetris
  Author: GGZiron.
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
- Version 1.0.7
+ Version 1.0.8
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
@@ -45,6 +45,14 @@ module GGZiron_Tetris
    *Removed my edit on the Audio module, as I found out the engine
     have methods that do (and do it better) what my edit of the module
     was set to do.
+ 1.0.8 Released on 10/07/2019
+   *Now, when loading older save file, the Tetris script will asume initial
+    values for contents that are otherwise extracted from the save file.
+   *Now properly initializing Tetris data upon starting new game, which it
+    wasn't previously.
+   *Improved the action counter, so it counts only successful actions.
+   *Other small bug fixes.
+   *Some code optimisation.
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
@@ -612,14 +620,6 @@ module GGZiron_Tetris
 # Don't edit anything bellow this point, unless you know what you are doing!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  @best_scores              ||= 0 
-  @last_game_scores         ||= 0 
-  @total_actions            ||= 0 
-  @total_deleted_lines      ||= 0 
-  @total_frames             ||= 0
-  @next_input_reaction_clock  = 0
-  @pause                      = true
-  
   class << self
     attr_accessor :window_info,         :clock,            :menu_tetris_enabled
     attr_accessor :clock_set_bgm,       :pause,            :next_input_reaction_clock
@@ -630,11 +630,17 @@ module GGZiron_Tetris
     attr_reader   :total_frames,        :actions,          :total_actions
     attr_reader   :best_scores,         :speed
     
+    def initialize_data
+      @best_scores, @last_game_scores, @total_actions     = 0, 0, 0
+      @total_deleted_lines, @total_frames, @total_frames  = 0, 0, 0
+      @next_input_reaction_clock                          = 0, 0, 0
+    end  
+    
     def start_game
       @scores, @deleted_lines, @level, @pause         = 0, 0, 1, true
       @clock, @next_event, @next_input_reaction_clock = 0, Graphics.frame_rate, 0
       @actions, @clock_set_bgm, @new_record,          = 0, 0, false
-      @clock_set_bgm = 0
+      @clock_set_bgm, @bgm_pos                        = 0, 0
       set_speed
       @window_info.draw_stats if @window_info
     end
@@ -755,11 +761,12 @@ module GGZiron_Tetris
     end  
     
     def extract_save_data(contents)
-      @best_scores         = contents[:ggzt42_best_scores]
-      @last_game_scores    = contents[:ggzt42_last_game_scores]
-      @total_actions       = contents[:ggzt42_total_actions]
+      @best_scores = contents[:ggzt42_best_scores]
+      @last_game_scores = contents[:ggzt42_last_game_scores]
+      @total_actions = contents[:ggzt42_total_actions]
       @total_deleted_lines = contents[:ggzt42_total_deleted_lines]
-      @total_frames        = contents[:ggzt42_total_frames]
+      @total_frames = contents[:ggzt42_total_frames]
+      initialize_data unless @best_scores
     end
     
     def total_seconds #returns all seconds spent
@@ -1105,27 +1112,25 @@ module GGZiron_Tetris
       controls = GGZiron_Tetris::CONTROLS
       return unless open? && active
       if Input.press?(controls[:move_left])
-        @tetromino.move_left
-        GGZiron_Tetris.play_sound(1)
-        GGZiron_Tetris.add_action
+        GGZiron_Tetris.add_action if @tetromino.move_left
         next_input(GGZiron_Tetris::MOVE_SENSITIVITY * Graphics.frame_rate)
+        GGZiron_Tetris.play_sound(1)
       end  
     
       if Input.press?(controls[:move_right])
-        @tetromino.move_right
-        GGZiron_Tetris.play_sound(1)
-        GGZiron_Tetris.add_action
+        GGZiron_Tetris.add_action if @tetromino.move_right
         next_input(GGZiron_Tetris::MOVE_SENSITIVITY * Graphics.frame_rate)
+        GGZiron_Tetris.play_sound(1)
       end  
     
       if Input.press?(controls[:cw_rotate]) || Input.press?(controls[:cw_rotate_alt])
-        @tetromino.rotate_clockwise
+        GGZiron_Tetris.add_action if @tetromino.rotate_clockwise
         GGZiron_Tetris.play_sound(2)
         next_input(GGZiron_Tetris::ROTATE_SENSITIVITY * Graphics.frame_rate )
       end  
     
       if Input.press?(controls[:ccw_rotate])
-        @tetromino.rotate_counter_clockwise
+        GGZiron_Tetris.add_action if @tetromino.rotate_counter_clockwise
         GGZiron_Tetris.play_sound(2)
         next_input(GGZiron_Tetris::ROTATE_SENSITIVITY * Graphics.frame_rate )
       end  
@@ -1506,23 +1511,19 @@ module GGZiron_Tetris
     end
     
     def spawn(spawning = true)
-      @spawning = spawning
       case @type
         when 1; spawn_o; when 2; spawn_l
         when 3; spawn_j; when 4; spawn_i
         when 5; spawn_s; when 6; spawn_t;
         when 7; spawn_z;  
       end
-      @spawning = false
     end 
     
-    def block(x ,y)
-      @field[x][y]
-    end 
+    def block(x ,y); @field[x][y]; end
     
     def assign_block(index, x, y)
       @tetromino_blocks[index] = block(x, y)
-      @game_over_flag = (!can_spawn?(x, y) && @spawning) || @game_over_flag
+      @game_over_flag = !can_spawn?(x, y) || @game_over_flag
       @tetromino_blocks[index].value = @type
       @tetromino_blocks[index].on_fall = true
     end 
@@ -1534,42 +1535,42 @@ module GGZiron_Tetris
       assign_block(3, @base[:x] + 1, @base[:y]    );
     end
      
-    def spawn_l(position = 1)
+    def spawn_l
       assign_block(0, @base[:x] + 1, @base[:y] - 1); 
       assign_block(1, @base[:x] - 1, @base[:y]    );
       assign_block(2, @base[:x],     @base[:y]    );
       assign_block(3, @base[:x] + 1, @base[:y]    );
     end
     
-    def spawn_j(position = 1)
+    def spawn_j
       assign_block(0, @base[:x] - 1, @base[:y] - 1); 
       assign_block(1, @base[:x] - 1, @base[:y]    );
       assign_block(2, @base[:x],     @base[:y]    );
       assign_block(3, @base[:x] + 1, @base[:y]    );
     end
     
-    def spawn_i(position = 1)
+    def spawn_i
       assign_block(0, @base[:x] - 1, @base[:y]    ); 
       assign_block(1, @base[:x],     @base[:y]    );
       assign_block(2, @base[:x] + 1, @base[:y]    );
       assign_block(3, @base[:x] + 2, @base[:y]    );
     end
     
-    def spawn_s(position = 1)
+    def spawn_s
       assign_block(0, @base[:x],     @base[:y] - 1); 
       assign_block(1, @base[:x] + 1, @base[:y] - 1);
       assign_block(2, @base[:x] - 1, @base[:y]    );
       assign_block(3, @base[:x],     @base[:y]    );
     end
     
-    def spawn_t(position = 1)
+    def spawn_t
       assign_block(0, @base[:x],     @base[:y] - 1); 
       assign_block(1, @base[:x] - 1, @base[:y]    );
       assign_block(2, @base[:x],     @base[:y]    );
       assign_block(3, @base[:x] + 1, @base[:y]    );
     end
     
-    def spawn_z(position = 1)
+    def spawn_z
       assign_block(0, @base[:x] - 1, @base[:y] - 1); 
       assign_block(1, @base[:x],     @base[:y] - 1);
       assign_block(2, @base[:x],     @base[:y]    );
@@ -1581,7 +1582,7 @@ module GGZiron_Tetris
     end  
 
     def clear_tetromino
-      for i in 0..3 do
+      for i in 0...@tetromino_blocks.size do
         @tetromino_blocks[i].value = 0; @tetromino_blocks[i].on_fall = false
       end  
     end
@@ -1596,27 +1597,15 @@ module GGZiron_Tetris
       super
     end
     
-    def block(x, y)
-      @rows[y].blocks[x]
-    end 
+    def block(x, y); @rows[y].blocks[x];end
+      
+    def move_left;   move(-1, 0);       end
+    def move_right;  move(1, 0);        end
+    def move_down;   move(0, 1);        end
+    def move_up;     move(0, -1);       end
     
-    def move_left(tetromino = @tetromino_blocks)
-      move(-1, 0, tetromino)
-    end
-    
-    def move_right(tetromino = @tetromino_blocks)
-      return move(1, 0, tetromino)
-    end  
-    
-    def move_down(tetromino = @tetromino_blocks)
-      return move(0, 1, tetromino)
-    end  
-    
-    def move_up(tetromino = @tetromino_blocks)
-      return move(0, -1, tetromino)
-    end 
-    
-    def move(x_offset, y_offset, tetromino = @tetromino_blocks)
+    def move(x_offset, y_offset)
+      tetromino = @tetromino_blocks
       return false unless can_move?(x_offset, y_offset, tetromino)
       @base[:x] += x_offset; @base[:y] += y_offset
       clear_tetromino
@@ -1632,11 +1621,10 @@ module GGZiron_Tetris
     
     def assign_squares(new_shape)
       @tetromino_blocks = new_shape
-      for i in 0..3 do
+      for i in 0...@tetromino_blocks.size do
         @tetromino_blocks[i].value = @type
         @tetromino_blocks[i].on_fall = true 
       end  
-      @tetromino_blocks.sort! {|a, b| b.y <=> a.y}
     end
     
     def can_move?(x_offset, y_offset, tetromino = @tetromino_blocks)
@@ -1675,7 +1663,6 @@ module GGZiron_Tetris
       end
         clear_tetromino
         assign_squares(new_shape)
-        GGZiron_Tetris.add_action if !moved
         true
     end
     
@@ -1733,7 +1720,7 @@ module GGZiron_Tetris
       self.value = 0 
     end 
     
-	def x; @x;                                                                     end
+	  def x; @x;                                                                     end
     def y; @y;                                                                     end
     def value; @value;                                                             end
     def dispose; @sprite.dispose;                                                  end 
@@ -1749,8 +1736,9 @@ end  #GGZiron_Tetris module
 module DataManager
   
   class <<self
-    alias_method :make_save_contents_oldggz424, :make_save_contents
+    alias_method :make_save_contents_oldggz424,    :make_save_contents
     alias_method :extract_save_contents_oldggz424, :extract_save_contents
+    alias_method :create_game_objects_oldggz424,   :create_game_objects
   end
   
   def self.make_save_contents(*args)
@@ -1766,6 +1754,11 @@ module DataManager
   def self.extract_save_contents(*args)
     extract_save_contents_oldggz424(*args)
     GGZiron_Tetris.extract_save_data(args[0])
+  end
+  
+  def self.create_game_objects(*args)
+    create_game_objects_oldggz424(*args)
+    GGZiron_Tetris.initialize_data
   end
   
 end #DataManager
