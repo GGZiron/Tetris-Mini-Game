@@ -6,7 +6,7 @@ module GGZiron_Tetris
  Author: GGZiron.
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
- Version 1.0.6
+ Version 1.0.7
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
@@ -40,6 +40,11 @@ module GGZiron_Tetris
  1.0.6 Released on 07/07/2019
    *Cleared one visual bug, that came with 1.0.5, and failed to detect it
     initially.
+ 1.0.7 Released on 09/07/2019
+   *Fixed small visual bug.
+   *Removed my edit on the Audio module, as I found out the engine
+    have methods that do (and do it better) what my edit of the module
+    was set to do.
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
@@ -56,11 +61,8 @@ module GGZiron_Tetris
  so I avoid name conflicting. But there are methods I overwrite (which I alias
  first), and methods I add into the original classes. With the purpose to avoid
  name conflict, the aliased method names have attached digits to them.
- Among all other stuffs I modify, I modify the Audio module too, so I am able
- to remember last music and background sound playing before the player run
- the Tetris Minigame. That very needed to be able to restore them once player
- exit tetris. It might not go well with other scripts that are playing with the 
- audio. 
+ 
+ 
  Some additional information about my tetris:
  
  As clasical Tetris, it has 9 levels, and the last one is endless.
@@ -167,7 +169,7 @@ module GGZiron_Tetris
 #                          TIME FLOW OPTIONS
 # ===========================================================================
 
-# The tetris speed flow tries not to depends on the frame rate of the game.
+# The tetris speed flow tries not to depend on the frame rate of the game.
 # The values given bellow are in seconds.
 # The actual time might vary with small fragmet of the second with the time
 # you set.
@@ -631,7 +633,8 @@ module GGZiron_Tetris
     def start_game
       @scores, @deleted_lines, @level, @pause         = 0, 0, 1, true
       @clock, @next_event, @next_input_reaction_clock = 0, Graphics.frame_rate, 0
-      @bgm_pos, @actions, @new_record                 = 0, 0, false
+      @actions, @clock_set_bgm, @new_record,          = 0, 0, false
+      @clock_set_bgm = 0
       set_speed
       @window_info.draw_stats if @window_info
     end
@@ -653,7 +656,7 @@ module GGZiron_Tetris
     def play_bgm( position = 0)
       file   = BACKGROUND_MUSIC[@level]
       file ||= BACKGROUND_MUSIC[:global]
-      Audio.bgm_play_ggz25667(file[:file], file[:volume], file[:pitch], position) if file
+      Audio.bgm_play(file[:file], file[:volume], file[:pitch], position) if file
       @clock_set_bgm = -1
     end
     
@@ -668,17 +671,17 @@ module GGZiron_Tetris
     
     def set_pause
       @pause = true
-      @bgm_pos  = Audio.bgm_pos
-      Audio.bgm_stop_ggz25667
+      @bgm_pos = Audio.bgm_pos
+      Audio.bgm_stop
     end
     
     def unset_pause
       @pause = false
-      play_bgm(@bgm_pos) 
+      play_bgm(@bgm_pos)
     end  
     
     def fade_bgm
-      Audio.bgm_fade_ggz25667(BGM_MUSIC_FADE_OUT)
+      Audio.bgm_fade(BGM_MUSIC_FADE_OUT)
       @clock_set_bgm = @clock + (BGM_MUSIC_FADE_OUT/1000.0) * Graphics.frame_rate * 1.5
     end
     
@@ -759,8 +762,7 @@ module GGZiron_Tetris
       @total_frames        = contents[:ggzt42_total_frames]
     end
     
-    def total_seconds
-      # returns all seconds spent
+    def total_seconds #returns all seconds spent
        @clock ||= 0 
       (@total_frames + @clock) / Graphics.frame_rate
     end  
@@ -769,7 +771,7 @@ module GGZiron_Tetris
     #return only the seconds passed after the last counted minute
       
     def total_minutes; total_seconds / 60; end
-    #returns all seconds minutes
+    #returns the total minutes spent
       
     def timer_minutes; total_minutes % 60; end 
     #return only the minutes passed after the last counted hour
@@ -777,8 +779,7 @@ module GGZiron_Tetris
     def hours_spent;   total_minutes / 60; end
     #returns the total hours, spent on the tetris.
       
-    def timer_to_string
-      #returns a timer as string
+    def timer_to_string #returns a timer as string
       seconds = timer_seconds;
       str_sec = seconds.to_s
       str_sec = "0" + str_sec if seconds < 10
@@ -884,8 +885,7 @@ module GGZiron_Tetris
   
     def start
       set_internal_clock
-      Audio.bgm_stop_ggz25667
-      Audio.bgs_stop_ggz25667
+      sound_management
       create_background
       prep_new_game
       create_block_1_window
@@ -894,6 +894,12 @@ module GGZiron_Tetris
       create_block_2_window
     end
     
+    def sound_management
+      Audio.bgm_stop; Audio.bgs_stop
+      @saved_bgm = RPG::BGM.last
+      @saved_bgs = RPG::BGS.last
+    end  
+    
     def set_internal_clock
       @internal_clock = Graphics.frame_rate
     end
@@ -901,7 +907,7 @@ module GGZiron_Tetris
     def start_tetris
       @internal_clock = -1
       Audio.me_stop
-      Audio.bgm_stop_ggz25667
+      Audio.bgm_stop
       @window_block_2.draw_control_contents 
       after_game_over if game_over?
       @window_block_1.define_next_spawn
@@ -959,8 +965,8 @@ module GGZiron_Tetris
   
     def play_intro_bgm
       @internal_clock = -1
-      file   = BACKGROUND_MUSIC[:intro]
-      Audio.bgm_play_ggz25667(file[:file], file[:volume], file[:pitch]) if file
+      file = BACKGROUND_MUSIC[:intro]
+      Audio.bgm_play(file[:file], file[:volume], file[:pitch]) if file
     end
  
     def game_over?
@@ -1006,10 +1012,10 @@ module GGZiron_Tetris
       @window_block_1.field.delete_field
       @window_block_1.field.viewport.dispose
       @background.dispose
-	  Audio.bgm_stop_ggz25667
+	    Audio.bgm_stop
       super
-      Audio.start_prev_bgm_ggz25667
-      Audio.start_prev_bgs_ggz25667
+      @saved_bgm.replay if @saved_bgm
+      @saved_bgs.replay if @saved_bgs
     end 
     
     def update_timer?
@@ -1237,19 +1243,11 @@ module GGZiron_Tetris
        GGZiron_Tetris::VOCAB[:added_symbol]
     end  
 	
-	def initial_y
-      block_size * 4
-	end
-	
-	def line_distance
-	  GGZiron_Tetris::WINDOW_BLOCK_1[:LD]
-	end
-	
     def update_level(init = true)
       vocab = GGZiron_Tetris::VOCAB[:level]
       str_1 = vocab + symb_add; str_2 = level
       width = text_size(str_1).width
-      clwidth = text_size(str_2).width
+      clwidth = text_size(str_2).width + 1
       height = text_size(str_1).height
       contents.clear_rect(width, initial_y, width, height) 
       draw_text_ex(0, initial_y, str_1) if init
@@ -1260,7 +1258,7 @@ module GGZiron_Tetris
       vocab = GGZiron_Tetris::VOCAB[:actions]
       str_1 = vocab + symb_add; str_2 = actions
       width = text_size(str_1).width
-      clwidth = text_size(str_2).width
+      clwidth = text_size(str_2).width + 1
       height = text_size(str_1).height
       contents.clear_rect(width, initial_y + line_distance, clwidth, height) 
       draw_text_ex(0, initial_y + line_distance, str_1) if init
@@ -1271,7 +1269,7 @@ module GGZiron_Tetris
       vocab = GGZiron_Tetris::VOCAB[:cleared_lines]
       str_1 = vocab + symb_add; str_2 = deleted_lines
       width = text_size(str_1).width
-      clwidth = text_size(str_2).width
+      clwidth = text_size(str_2).width + 1
       height = text_size(str_1).height
       contents.clear_rect(width, initial_y + line_distance * 2, clwidth, height)
       draw_text_ex(0, initial_y + line_distance * 2, str_1) if init
@@ -1282,7 +1280,7 @@ module GGZiron_Tetris
       vocab = GGZiron_Tetris::VOCAB[:scores]
       str_1 = vocab + symb_add; str_2 = scores.to_s
       width = text_size(str_1).width
-      clwidth = text_size(str_2).width
+      clwidth = text_size(str_2).width + 1
       height = text_size(str_1).height
       contents.clear_rect(width, initial_y + line_distance * 3, clwidth, height) 
       draw_text_ex(0, initial_y + line_distance * 3, str_1) if init
@@ -1296,7 +1294,7 @@ module GGZiron_Tetris
       vocab = GGZiron_Tetris::VOCAB[:best_scores]
       str_1 = vocab + symb_add; str_2 = best_scores.to_s
       width = text_size(str_1).width
-      clwidth = text_size(str_2).width
+      clwidth = text_size(str_2).width + 1
       height = text_size(str_1).height
       contents.clear_rect(width, initial_y + line_distance * 4, clwidth, height) 
       draw_text_ex(0, initial_y + line_distance * 4, str_1) if init
@@ -1311,7 +1309,7 @@ module GGZiron_Tetris
       str_1 = vocab + symb_add
       str_2 = GGZiron_Tetris.timer_to_string
       width = text_size(str_1).width
-      clwidth = text_size(str_2).width
+      clwidth = text_size(str_2).width + 1
       height = text_size(str_1).height
       contents.clear_rect(width, initial_y + line_distance * 5, clwidth, height)
       draw_text_ex(0, initial_y + line_distance* 5, str_1) if init
@@ -1338,6 +1336,8 @@ module GGZiron_Tetris
       @field.display_tetromino(type)
     end  
       
+    def initial_y; block_size * 4;                                 end
+	  def line_distance; GGZiron_Tetris::WINDOW_BLOCK_1[:LD];        end
     def clear_spawning_bag; @spawning_bag = [];                    end
     def best_scores_color; GGZiron_Tetris::BEST_SCORES_TEXT_COLOR; end
     def reset_font_settings;                                       end
@@ -1783,7 +1783,7 @@ class Scene_Menu < Scene_MenuBase
     SceneManager.call(GGZiron_Tetris::Scene_Tetris)
   end  
   
-end  
+end #Scene_Menu
 
 class Window_MenuCommand < Window_Command
  
@@ -1801,68 +1801,6 @@ class Window_MenuCommand < Window_Command
   end
   
 end  #Scene_Menu
-
-module Audio
-  
-  class << self
-    
-    #ggz25667 part of names are so i avoid name clash
-    alias_method :bgm_play_ggz25667, :bgm_play
-    alias_method :bgm_stop_ggz25667, :bgm_stop
-    alias_method :bgm_fade_ggz25667, :bgm_fade
-    alias_method :bgs_play_ggz25667, :bgs_play
-    alias_method :bgs_stop_ggz25667, :bgs_stop
-    alias_method :bgs_fade_ggz25667, :bgs_fade
-    
-    def bgm_play(*args)
-      @file_ggz25667 = args[0] 
-      @volume_ggz25667 = (args[1]) ? args[1] : 100
-      @pitch_ggz25667  = (args[2]) ? args[2] : 100
-      bgm_play_ggz25667(*args)
-    end 
-  
-    def bgm_stop 
-      @file_ggz25667 = nil
-      bgm_stop_ggz25667
-    end 
-    
-    def bgm_fade(*args) 
-      @file_ggz25667 = nil
-      bgm_fade_ggz25667(*args)
-    end
-    
-    def start_prev_bgm_ggz25667
-      return if !@file_ggz25667
-      @volume_ggz25667 ||= 100; @pitch_ggz25667 ||= 100
-      bgm_play(@file_ggz25667, @volume_ggz25667, @pitch_ggz25667)
-    end  
-    
-    def bgs_play(*args)
-      @file_bgs_ggz25667 = args[0]
-      @volume_bgs_ggz25667 = (args[1]) ?  args[1] : 100
-      @pitch_bgs_ggz25667 = (args[2]) ? args[2] : 100
-      bgs_play_ggz25667(*args)
-    end 
-  
-    def bgs_stop 
-      @file_bgs_ggz25667 = nil
-      bgs_stop_ggz25667
-    end 
-    
-    def bgs_fade(*args) 
-      @file_bgs_ggz25667 = nil
-      bgs_fade_ggz25667(*args)
-    end
-    
-    def start_prev_bgs_ggz25667
-      return if !@file_bgs_ggz25667
-      @volume_bgs_ggz25667 ||= 100; @pitch_bgs_ggz25667 ||= 100
-      bgs_play(@file_bgs_ggz25667,  @volume_bgs_ggz25667, @pitch_bgs_ggz25667)
-    end 
-    
-  end  #class << self
-  
-end #Audio
 # ===========================================================================
 #                         END OF FILE
-# =========================================================================== 
+# ===========================================================================
