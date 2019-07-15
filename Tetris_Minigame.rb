@@ -1,4 +1,5 @@
 ($imported ||= {})[:GGZiron_Tetris] = true
+
 module GGZiron_Tetris
   
 =begin
@@ -6,7 +7,7 @@ module GGZiron_Tetris
  Author: GGZiron.
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
- Version 1.0.8
+ Version 1.1.0
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
@@ -16,6 +17,9 @@ module GGZiron_Tetris
  
  If you see any bug, or have suggestion, you can post on this script thread on
  RPG Maker forum, or pm me.
+ 
+ Link to my script thread: 
+ https://forums.rpgmakerweb.com/index.php?threads/tetris-mini-game.110592/
  
  Version History
  1.0.0: Initial Release on 02/07/2019.
@@ -53,6 +57,11 @@ module GGZiron_Tetris
    *Improved the action counter, so it counts only successful actions.
    *Other small bug fixes.
    *Some code optimisation.
+ 1.1.0 Released on TBA 
+   *New Option in the "General Options": Make your own tetromino spawning bags!
+   *Improved a bit the code about text positioning in "Window Block 1", so
+    changing font or block sizes would not ruin it.
+   *Small code optimisations.
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
@@ -70,7 +79,6 @@ module GGZiron_Tetris
  first), and methods I add into the original classes. With the purpose to avoid
  name conflict, the aliased method names have attached digits to them.
  
- 
  Some additional information about my tetris:
  
  As clasical Tetris, it has 9 levels, and the last one is endless.
@@ -79,16 +87,18 @@ module GGZiron_Tetris
  change colors, forming tetromino figures, that looks like moving, rotating and 
  falling down with certain speed. All that is achieved via controlled recoloring.
  
- Tetrominoes spawn order is as follows: There is virtual bag ( array ) of all 7 
- pieces plus one fully random piece, which make bag of 8 pieces. Those pieces 
- will be spawned on random order. After each spawn, the spawning is removed
- from the bag. Once the bag is empty, it will be reset.
+ Default tetrominoes spawn order is as follows: There is virtual bag ( array )
+ of all 7 pieces plus one fully random piece, which make bag of 8 pieces. 
+ Those pieces will be spawned on random order. After each spawn, the spawning is 
+ removed from the bag. Once the bag is empty, it will be reset.
  That means each piece type will be spawn at least once per every 8 spawned
  piece types, as one of them will be spawned twice. Also it means that
  a piece type is possible to be spawned 4 times in row. That can occure 
  if the given piece and the random piece are last 2 of their respective bag, 
  but first two of next bag, and the random piece happens to be the same as 
  other one.
+ **With version 1.1.0, there is option you to set your spawning bags!
+   Of course, you can always keep it as it is.
  
  The script provides music background(with settings about it), sound effects,
  certain data to be extracted via script calls upon main RPG game, if you
@@ -149,6 +159,32 @@ module GGZiron_Tetris
 # file, as each color have index, starting from 0. The default 
 # value of 2 with default Window.png would produce orange text color.
 
+  SPAWNING_BAGS = { #That option is introduced in version 1.1.0
+    0 =>[0, 1, 2, 3, 4, 5, 6, 7],
+# Add more entries. 
+
+
+# Possible second and third entries:
+# 1 =>[0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7],
+# 2 =>[0], #Fully random.
+# You can also give symbol keys as shown bellow:
+# :favorite_tetroes => [1, 2, 3, 4]
+
+  } #Do not delete this line!!!
+  
+# The Tetris will take randomly one of the entries, and will spawn tetromino
+# based on every value given, and will delete that value, until the bag is empty.
+# Once that happen, it will take another bag.
+# When all bags are empty, the script will reset them.
+# If you do not include a number within a spawning bag, the coresponding 
+# tetromino wouldn't be spawned, unless:
+#   You set zero or out of range values, then there is random chance to be 
+#   spawned.
+# If value of coresponding tetromino is not within the any bag, it won't be 
+# spawned at all, unless:
+#   You set zero or out of range values, then there is random chance to be 
+#   spawned.
+
   @menu_tetris_enabled = true #Enables tetris play from menu, if true.
   @menu_tetris_display = true #Displays play tetris option in menu, if true.
 # You can change the above two settings any time in game, with the
@@ -171,7 +207,7 @@ module GGZiron_Tetris
 # to interupt it.
 # Use integers(whole numbers), not decimals. 
  
-# For game over music effect, see the audio settings part of the settings.
+# For game over music event, see the audio settings part of the settings.
  
 # ===========================================================================
 #                          TIME FLOW OPTIONS
@@ -482,8 +518,8 @@ module GGZiron_Tetris
     :W  => 215,
     :H  => 210,
     :T  => 255,
-    :FS => 20,
-    :LD => 17,
+    :FS => 20,  
+    :LD => 17, 
   }
   
 # Window Pause is the third.
@@ -511,7 +547,7 @@ module GGZiron_Tetris
     :W    => WINDOW_BLOCK_1[:W],
     :H    => Graphics.height - (WINDOW_PAUSE[:Y] + WINDOW_PAUSE[:H] + 5),
     :T    => 255,
-    :FS_1 => 20, # Used for controls text.
+    :FS_1 => 19, # Used for controls text.
     :FS_2 => 28, # Used for "Game Over" string.
     :FS_3 => 20, # Used for the new best scores notification.
     :LD   => 17,
@@ -539,8 +575,10 @@ module GGZiron_Tetris
    :game_over         => "Game Over",
    :new_high_scores1  => "Congratulations!!",
    :new_high_scores2  => "You set new high scores!",
-   :play_tetris       => "Play Tetris", #This one appears in the main menu.
+   :play_tetris       => "Play Tetris", # This one appears in the main menu.
    :added_symbol      => ": "# adds : and space after certain strings
+#                              Tip: You can turn added_symbol to empty string,
+#                                   and add symbol manualy in the other strings.
  }
 
 # ===========================================================================
@@ -631,22 +669,28 @@ module GGZiron_Tetris
     attr_reader   :best_scores,         :speed
     
     def initialize_data
-      @best_scores, @last_game_scores, @total_actions     = 0, 0, 0
-      @total_deleted_lines, @total_frames, @total_frames  = 0, 0, 0
-      @next_input_reaction_clock                          = 0, 0, 0
+      @best_scores, @total_frames, @total_actions = 0, 0, 0
+      @total_deleted_lines, @last_game_scores     = 0, 0
     end  
     
-    def start_game
-      @scores, @deleted_lines, @level, @pause         = 0, 0, 1, true
-      @clock, @next_event, @next_input_reaction_clock = 0, Graphics.frame_rate, 0
-      @actions, @clock_set_bgm, @new_record,          = 0, 0, false
-      @clock_set_bgm, @bgm_pos                        = 0, 0
+    def set_game #initializes some variables
+      @next_input_reaction_clock, @scores = 0, 0
+      @level, @bgm_pos                    = 1, 0
+      @clock, @next_input_reaction_clock  = 0, 0
+      @clock_set_bg, @actions             = 0, 0
+      @clock_set_bgm, @deleted_lines      = 0, 0
+      @pause, @new_record                 = true, false
+      @next_event                         = Graphics.frame_rate
       set_speed
-      @window_info.draw_stats if @window_info
+      @window_info.draw_stats             if @window_info
     end
       
     def generate_color(values)
       Color.new(values["Red"], values["Green"], values["Blue"], values["Alpha"])
+    end 
+    
+    def random_number(max_value)
+      rand(max_value)
     end 
     
     def new_record?
@@ -700,17 +744,47 @@ module GGZiron_Tetris
       end
       window_info.update_scores 
     end
+    
+    def create_spawning_bag
+      @bag_holder ||= Hash.new
+      if  GGZiron_Tetris::SPAWNING_BAGS && @bag_holder.empty? 
+        bags = GGZiron_Tetris::SPAWNING_BAGS
+        bags.each{ |key, value| @bag_holder[key] = value.dup}
+      end 
+      if @bag_holder.empty?
+        @spawning_bag = 0, 1, 2, 3, 4, 5, 6, 7
+      else
+        keys = Array.new
+        @bag_holder.each_key{|key| keys << key}
+        @spawning_bag = @bag_holder.delete(keys[random_number(keys.size)])
+      end  
+    end
+    
+    def define_next_spawn
+      create_spawning_bag if @spawning_bag.empty?
+      item = random_number(@spawning_bag.size)
+      type = @spawning_bag.delete_at(item)
+      type = random_number(7) + 1 if type == 0
+      type
+    end 
       
     def end_game
       set_last_game_scores
       @total_frames += @clock
-      @clock = 0
     end  
     
     def exit_scene
       end_game
-      @window_info = nil
-    end  
+      @next_input_reaction_clock, @scores = nil, nil
+      @level, @bgm_pos                    = nil, nil
+      @clock, @next_input_reaction_clock  = nil, nil
+      @clock_set_bg, @actions             = nil, nil
+      @clock_set_bgm, @deleted_lines      = nil, nil
+      @pause, @new_record                 = nil, nil
+      @next_event, @spawning_bag          = nil, nil
+      @bag_holder, @window_info           = nil, nil
+      @new_record, @speed                 = nil, nil
+    end
       
     def base_fall_speed
       Graphics.frame_rate * BASE_FALL_SPEED
@@ -761,12 +835,12 @@ module GGZiron_Tetris
     end  
     
     def extract_save_data(contents)
-      @best_scores = contents[:ggzt42_best_scores]
-      @last_game_scores = contents[:ggzt42_last_game_scores]
-      @total_actions = contents[:ggzt42_total_actions]
+      @best_scores         = contents[:ggzt42_best_scores]
+      @last_game_scores    = contents[:ggzt42_last_game_scores]
+      @total_actions       = contents[:ggzt42_total_actions]
       @total_deleted_lines = contents[:ggzt42_total_deleted_lines]
-      @total_frames = contents[:ggzt42_total_frames]
-      initialize_data unless @best_scores
+      @total_frames        = contents[:ggzt42_total_frames]
+      initialize_data        unless @best_scores
     end
     
     def total_seconds #returns all seconds spent
@@ -787,16 +861,17 @@ module GGZiron_Tetris
     #returns the total hours, spent on the tetris.
       
     def timer_to_string #returns a timer as string
-      seconds = timer_seconds;
-      str_sec = seconds.to_s
-      str_sec = "0" + str_sec if seconds < 10
-      minutes = timer_minutes;
-      str_min = minutes.to_s
-      str_min = "0" + str_min if minutes < 10
+      seconds = timer_seconds;  minutes = timer_minutes
+      str_sec = (seconds < 10) ? '0' + seconds.to_s : seconds.to_s
+      str_min = (minutes < 10) ? '0' + minutes.to_s : minutes.to_s
       "#{hours_spent.to_s}:#{str_min}:#{str_sec}"
     end  
       
   end  #class << self
+  
+# ===========================================================================
+#                    ▼ class Tetris Field
+# ===========================================================================
   
   class Tetris_Field
     
@@ -808,11 +883,6 @@ module GGZiron_Tetris
       w =  columns * block_size
       h =  rows * block_size
       create_viewport(x, y, w, h, z)
-      tetris_bitmap
-    end  
-    
-    def make_field_image
-      create_viewport
       tetris_bitmap
     end  
     
@@ -847,7 +917,7 @@ module GGZiron_Tetris
           @field[x] << Building_Block.new(@viewport)
           @field[x][y].x = x
           @field[x][y].y = y
-       end 
+        end 
       end
       Graphics.update
     end
@@ -887,6 +957,10 @@ module GGZiron_Tetris
     end  
     
   end #Tetris_Field
+  
+# ===========================================================================
+#                    ▼ class Scene Tetris
+# ===========================================================================
   
   class Scene_Tetris < Scene_Base
   
@@ -1004,6 +1078,7 @@ module GGZiron_Tetris
     end  
 
     def refresh
+      return if @ggzt_exiting
       if @window_block_2.working?; @window_block_2.refresh; return; end  
       @tetris_window.refresh
       @internal_clock -= 1 if @internal_clock > 0
@@ -1013,6 +1088,7 @@ module GGZiron_Tetris
     end 
   
     def return_scene
+      @ggzt_exiting = true
       GGZiron_Tetris.exit_scene
    	  @tetris_window.field.delete_field
       @tetris_window.field.viewport.dispose
@@ -1034,17 +1110,21 @@ module GGZiron_Tetris
     end
     
     def prep_new_game 
-      GGZiron_Tetris.start_game
+      GGZiron_Tetris.set_game
       update_timer
     end  
   
     def dispose_main_viewport;                       end
     def dispose_background;                          end
-    def update; super; refresh;                      end
+    def update;  super; refresh;                     end
     def picture; GGZiron_Tetris::BACKGROUND_PICTURE; end
   
   end #Scene_Tetris
   
+# ===========================================================================
+#                    ▼ class Window Tetris Field
+# ===========================================================================
+
   class Window_TetrisField < Window_Selectable
   
     attr_accessor :viewport
@@ -1069,7 +1149,8 @@ module GGZiron_Tetris
     end 
   
     def tetris_bitmap(x, y, z)
-      @field = Tetris_Field.new( x, y, 20, 10, self.z)
+      field_rows, field_columns = 20, 10
+      @field = Tetris_Field.new( x, y, field_rows, field_columns, self.z)
       @rows  = Array.new
       for i in 0..19
         @rows << Tetris_Row.new(@field.take_row(i))
@@ -1080,13 +1161,13 @@ module GGZiron_Tetris
       check_for_pause
       return if GGZiron_Tetris.pause
       self.clock += 1
-      play_bgm if clock >= GGZiron_Tetris.clock_set_bgm && GGZiron_Tetris.clock_set_bgm >= 0
+      play_bgm  if clock >= GGZiron_Tetris.clock_set_bgm && GGZiron_Tetris.clock_set_bgm >= 0
       make_move if @tetromino && @spawned && GGZiron_Tetris.next_input_reaction_clock <= clock
       if clock >= GGZiron_Tetris.next_event
         if @erase_row_flag >= 0
           field_check(@erase_row_flag)
           return
-        end  
+        end
         @spawned ? fall : spawn 
       end 
     end 
@@ -1195,6 +1276,10 @@ module GGZiron_Tetris
     def clock=(value);          GGZiron_Tetris.clock = value;      end 
   
   end  #Window_TetrisField
+    
+# ===========================================================================
+#                    ▼ class Window Block 1
+# ===========================================================================    
   
   class Window_Block1 < Window_Base
   
@@ -1207,15 +1292,18 @@ module GGZiron_Tetris
       h = GGZiron_Tetris::WINDOW_BLOCK_1[:H]
       super(x, y, w, h)
       self.opacity = GGZiron_Tetris::WINDOW_BLOCK_1[:T]
+      contents.font.size  = GGZiron_Tetris::WINDOW_BLOCK_1[:FS]
       create_field
       create_spawning_bag
       draw_stats
     end  
   
     def create_field
-      x = self.x + 10;    y = self.y + block_size/4 + 27
-      w = self.width - block_size/2; h =  self.height - block_size/2 - 40
-      @field = Tetris_Field.new(x, y, 3, 4, self.z)
+      x = self.x + standard_padding; 
+      @field_y = self.y + 5 + standard_padding + contents.font.size
+      w = self.width - block_size/2; h = self.height - block_size/2
+      field_rows, field_columns = 3, 4;
+      @field = Tetris_Field.new(x, @field_y, field_rows, field_columns, self.z)
     end  
     
     def handle_game_over
@@ -1224,16 +1312,12 @@ module GGZiron_Tetris
     end  
   
     def create_spawning_bag
-      @spawning_bag = 0, 1, 2, 3, 4, 5, 6, 7
+      GGZiron_Tetris.create_spawning_bag
     end  
   
     def block_size
       GGZiron_Tetris::BLOCK_SIZE + GGZiron_Tetris::BLOCKS_DISTANCE 
     end  
-  
-    def random_number(max_value)
-      rand(max_value)
-    end 
     
     def clear_tetromino
       @field.clear_tetromino
@@ -1324,7 +1408,6 @@ module GGZiron_Tetris
         
     def draw_stats
       contents.clear
-      contents.font.size  = GGZiron_Tetris::WINDOW_BLOCK_1[:FS]
       vocab = GGZiron_Tetris::VOCAB
       contents.font.color = normal_color
       draw_text_ex(0, 0, vocab[:next_tetro] + vocab[:added_symbol])
@@ -1334,14 +1417,11 @@ module GGZiron_Tetris
     end  
     
     def define_next_spawn
-      create_spawning_bag if @spawning_bag.empty?
-      item = random_number(@spawning_bag.size)
-      type = @spawning_bag.delete_at(item)
-      type = random_number(7) + 1 if type == 0
+      type = GGZiron_Tetris.define_next_spawn
       @field.display_tetromino(type)
     end  
-      
-    def initial_y; block_size * 4;                                 end
+   
+    def initial_y; contents.font.size + block_size * 3;            end                         
 	  def line_distance; GGZiron_Tetris::WINDOW_BLOCK_1[:LD];        end
     def clear_spawning_bag; @spawning_bag = [];                    end
     def best_scores_color; GGZiron_Tetris::BEST_SCORES_TEXT_COLOR; end
@@ -1353,7 +1433,11 @@ module GGZiron_Tetris
     def deleted_lines; GGZiron_Tetris.deleted_lines.to_s;          end
   
   end #Window_Block1 
-  
+
+# ===========================================================================
+#                    ▼ class Window Pause
+# =========================================================================== 
+
   class Window_Pause < Window_Command 
     
     def initialize
@@ -1388,6 +1472,10 @@ module GGZiron_Tetris
 
   
   end #Window_Pause
+    
+# ===========================================================================
+#                    ▼ class Window Block 2
+# ===========================================================================
   
   class Window_Block2 < Window_Base
     
@@ -1457,6 +1545,10 @@ module GGZiron_Tetris
     def deleted_lines; GGZiron_Tetris.deleted_lines.to_s;          end
   
   end #Window_Block2
+    
+# ===========================================================================
+#                    ▼ class Tetris Row
+# ===========================================================================   
   
   class Tetris_Row
     
@@ -1496,6 +1588,10 @@ module GGZiron_Tetris
       
   end #Tetris_Row
   
+# ===========================================================================
+#                    ▼ class Tetromino Base
+# ===========================================================================   
+  
   class Tetromino_Base
     
     attr_reader :game_over_flag, :type
@@ -1504,20 +1600,42 @@ module GGZiron_Tetris
       @game_over_flag = false
       @field = field
       @tetromino_blocks = Array.new(4)
-      @type = type
-      @type = 1 + rand(7) if @type == 0
+      @type = type #pieces type 1: O, 2: L, 3: J, 4: I, 5: S, 6: T, 7: Z
+      @type = 1 + rand(7) unless @type.between?(1, 7)
       @base ||= { :x =>1, :y=>2 }
       @base[:y] -= 1 if @type == 4
     end
     
-    def spawn(spawning = true)
+    def spawn
+      spawn_block_1; spawn_block_2; spawn_block_3; spawn_block_4 
+    end 
+    
+    def spawn_block_1
+      assign_block(0, @base[:x], @base[:y]);
+    end  
+    
+    def spawn_block_2
       case @type
-        when 1; spawn_o; when 2; spawn_l
-        when 3; spawn_j; when 4; spawn_i
-        when 5; spawn_s; when 6; spawn_t;
-        when 7; spawn_z;  
+        when 1, 5, 6, 7;       assign_block(1, @base[:x],     @base[:y] - 1);
+        when 2, 3, 4;          assign_block(1, @base[:x] - 1, @base[:y]    );
       end
     end 
+    
+    def spawn_block_3
+      case @type
+        when 1, 2, 5;          assign_block(2, @base[:x] + 1, @base[:y] - 1);
+        when 3, 7;             assign_block(2, @base[:x] - 1, @base[:y] - 1); 
+      end
+      assign_block(2, @base[:x] + 2, @base[:y]) if @type == 4
+      assign_block(2, @base[:x] - 1, @base[:y]) if @type == 6
+    end 
+    
+    def spawn_block_4
+      case @type
+        when 1, 2, 3, 4, 6, 7; assign_block(3, @base[:x] + 1, @base[:y]    );
+      end
+      assign_block(3, @base[:x] - 1, @base[:y]) if @type == 5 
+    end  
     
     def block(x ,y); @field[x][y]; end
     
@@ -1527,55 +1645,6 @@ module GGZiron_Tetris
       @tetromino_blocks[index].value = @type
       @tetromino_blocks[index].on_fall = true
     end 
-    
-    def spawn_o
-      assign_block(0, @base[:x],     @base[:y] - 1); 
-      assign_block(1, @base[:x],     @base[:y]    );
-      assign_block(2, @base[:x] + 1, @base[:y] - 1);
-      assign_block(3, @base[:x] + 1, @base[:y]    );
-    end
-     
-    def spawn_l
-      assign_block(0, @base[:x] + 1, @base[:y] - 1); 
-      assign_block(1, @base[:x] - 1, @base[:y]    );
-      assign_block(2, @base[:x],     @base[:y]    );
-      assign_block(3, @base[:x] + 1, @base[:y]    );
-    end
-    
-    def spawn_j
-      assign_block(0, @base[:x] - 1, @base[:y] - 1); 
-      assign_block(1, @base[:x] - 1, @base[:y]    );
-      assign_block(2, @base[:x],     @base[:y]    );
-      assign_block(3, @base[:x] + 1, @base[:y]    );
-    end
-    
-    def spawn_i
-      assign_block(0, @base[:x] - 1, @base[:y]    ); 
-      assign_block(1, @base[:x],     @base[:y]    );
-      assign_block(2, @base[:x] + 1, @base[:y]    );
-      assign_block(3, @base[:x] + 2, @base[:y]    );
-    end
-    
-    def spawn_s
-      assign_block(0, @base[:x],     @base[:y] - 1); 
-      assign_block(1, @base[:x] + 1, @base[:y] - 1);
-      assign_block(2, @base[:x] - 1, @base[:y]    );
-      assign_block(3, @base[:x],     @base[:y]    );
-    end
-    
-    def spawn_t
-      assign_block(0, @base[:x],     @base[:y] - 1); 
-      assign_block(1, @base[:x] - 1, @base[:y]    );
-      assign_block(2, @base[:x],     @base[:y]    );
-      assign_block(3, @base[:x] + 1, @base[:y]    );
-    end
-    
-    def spawn_z
-      assign_block(0, @base[:x] - 1, @base[:y] - 1); 
-      assign_block(1, @base[:x],     @base[:y] - 1);
-      assign_block(2, @base[:x],     @base[:y]    );
-      assign_block(3, @base[:x] + 1, @base[:y]    );
-    end
     
     def can_spawn?(x, y)
       !(block(x, y).value > 0)
@@ -1589,6 +1658,10 @@ module GGZiron_Tetris
     
   end #Tetromino_Base
   
+# ===========================================================================
+#                          ▼ class Tetromino
+# ===========================================================================   
+  
   class Tetromino < Tetromino_Base
     
     def initialize(rows, type)
@@ -1599,10 +1672,10 @@ module GGZiron_Tetris
     
     def block(x, y); @rows[y].blocks[x];end
       
-    def move_left;   move(-1, 0);       end
-    def move_right;  move(1, 0);        end
-    def move_down;   move(0, 1);        end
-    def move_up;     move(0, -1);       end
+    def move_left;   move(-1, 0); end
+    def move_right;  move(1,  0); end
+    def move_down;   move(0,  1); end
+    def move_up;     move(0, -1); end
     
     def move(x_offset, y_offset)
       tetromino = @tetromino_blocks
@@ -1649,13 +1722,13 @@ module GGZiron_Tetris
         new_y = base_block.y + ( y_offset * dir_multiplier )
         if (!new_x.between?(0, 9) || !new_y.between?(0, 19))
           if (new_x == (-1) || new_x == 10 || new_y == (-1))
-            wall_kick(x_offset, y_offset, dir_multiplier, moved)
+            wall_kick(x_offset, y_offset, dir_multiplier) unless moved
           end
           return
         end
         new_block = block(new_x, new_y)
         if (new_block.value > 0 && !new_block.on_fall)
-          wall_kick(x_offset, 0, dir_multiplier, moved)
+          wall_kick(x_offset, 0, dir_multiplier) unless moved
           return
         end 
         new_shape << new_block 
@@ -1666,8 +1739,7 @@ module GGZiron_Tetris
         true
     end
     
-    def wall_kick(x_offset, y_offset, dir_multiplier, moved)
-      return if moved
+    def wall_kick(x_offset, y_offset, dir_multiplier)
       base_x = @base[:x]; base_y = @base[:y]
       moved = true
       if x_offset != 0
@@ -1702,6 +1774,10 @@ module GGZiron_Tetris
     
   end #Tetromino
   
+# ===========================================================================
+#                      ▼ class Building Block
+# ===========================================================================   
+  
   class Building_Block
     
     attr_accessor :on_fall
@@ -1733,6 +1809,10 @@ module GGZiron_Tetris
   
 end  #GGZiron_Tetris module
 
+# ===========================================================================
+#                     ▼ module Data Manager
+# ===========================================================================  
+
 module DataManager
   
   class <<self
@@ -1763,6 +1843,10 @@ module DataManager
   
 end #DataManager
 
+# ===========================================================================
+#                     ▼ class Scene Menu
+# =========================================================================== 
+
 class Scene_Menu < Scene_MenuBase
   
   alias_method :create_comand_window_ggz54314, :create_command_window
@@ -1777,6 +1861,10 @@ class Scene_Menu < Scene_MenuBase
   end  
   
 end #Scene_Menu
+
+# ===========================================================================
+#                   ▼ class Window Menu Command 
+# =========================================================================== 
 
 class Window_MenuCommand < Window_Command
  
