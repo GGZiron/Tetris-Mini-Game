@@ -57,7 +57,7 @@ module GGZiron_Tetris
    *Improved the action counter, so it counts only successful actions.
    *Other small bug fixes.
    *Some code optimisation.
- 1.1.0 Released on 16/7/2019
+ 1.1.0 Released on 16/07/2019
    *New Option in the "General Options": Make your own tetromino spawning bags!
    *Improved a bit the code about text positioning in "Window Block 1", so
     changing font or block sizes would not ruin it.
