@@ -1,1 +1,41 @@
-
+ Version History
+ 1.0.0: Initial Release on 02/07/2019.
+ 1.0.1: Released on 03/07/2019. 
+   *Fixed a typo I noticed in one of the strings.
+   *Removed two unnecessary operations I did in the Audio module.
+ 1.0.2: Released on 03/07/2019
+   *Readded the "unncecessary" operations, and fixed an issue they had
+    in initial version.
+ 1.0.3: Released on 04/07/2019
+   *Fixed new possible issues with the Audio module.
+   *Fixed an issue where clearing the required number of lines sometimes 
+    would not increase the hardship level.
+ 1.0.4: Released on 04/07/2019
+   *Now disposing properly a lot of graphical objects, which it wasn't
+    previously. Found about it while using Mithran's debugger script.
+ 1.0.5: Released on 07/07/2019
+   *Performance update. In previous version, all stats (level, deleted lines,
+    scores, etc) were redrawn whenever one of them changes, causing some lag.
+    Now, it redraws only the part that needs to be redrawn, as it should be.
+    Did other improvements too.
+ 1.0.6 Released on 07/07/2019
+   *Cleared one visual bug, that came with 1.0.5, and failed to detect it
+    initially.
+ 1.0.7 Released on 09/07/2019
+   *Fixed small visual bug.
+   *Removed my edit on the Audio module, as I found out the engine
+    have methods that do (and do it better) what my edit of the module
+    was set to do.
+ 1.0.8 Released on 10/07/2019
+   *Now, when loading older save file, the Tetris script will asume initial
+    values for contents that are otherwise extracted from the save file.
+   *Now properly initializing Tetris data upon starting new game, which it
+    wasn't previously.
+   *Improved the action counter, so it counts only successful actions.
+   *Other small bug fixes.
+   *Some code optimisation.
+ 1.1.0 Released on 16/07/2019
+   *New Option in the "General Options": Make your own tetromino spawning bags!
+   *Improved a bit the code about text positioning in "Window Block 1", so
+    changing font or block sizes would not ruin it.
+   *Small code optimisations.
