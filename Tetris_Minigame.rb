@@ -47,7 +47,7 @@ module GGZiron_Tetris
    *Small code optimisations.
  1.1.1 Released on 21/07/2019
    *Now the field is one single sprite, and the building blocks are its
-    rectangles. In previous version each building block had its own sprite.
+    rectangles. In previous versions each building block had its own sprite.
     That doesn't change the Tetris appearance.
    *Did more code optimisations.
    
