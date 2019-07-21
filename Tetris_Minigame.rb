@@ -7,61 +7,49 @@ module GGZiron_Tetris
  Author: GGZiron.
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
- Version 1.1.0
+ Version 1.1.1
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
+ 
+ This script is licensed under GNU General Public License v3.0
+ To see more about it, check here:
+ https://github.com/GGZiron/Tetris-Mini-Game/blob/master/LICENSE
+ and and here:
+ https://www.gnu.org/licenses/gpl-3.0.html
+ 
  
  The idea to make tetris script came from Neo_Kum0rius_6000's script request 
  thread, although I started my tetris several months later. 
  
  If you see any bug, or have suggestion, you can post on this script thread on
- RPG Maker forum, or pm me.
+ RPG Maker forum, found here:
+ https://forums.rpgmakerweb.com/index.php?threads/tetris-mini-game.110592/
+ ,or pm me. 
+ Alternatively, you can report an issue here:
+ https://github.com/GGZiron/Tetris-Mini-Game/issues
  
  Link to my script thread: 
  https://forums.rpgmakerweb.com/index.php?threads/tetris-mini-game.110592/
  
- Version History
+ For full Version History, including all changes between 1.0.0 and 1.1.0,
+ open this site: 
+ 
+ https://github.com/GGZiron/Tetris-Mini-Game/blob/master/Version%20History
+ 
+ Version History(partial):
  1.0.0: Initial Release on 02/07/2019.
- 1.0.1: Released on 03/07/2019. 
-   *Fixed a typo I noticed in one of the strings.
-   *Removed two unnecessary operations I did in the Audio module.
- 1.0.2: Released on 03/07/2019
-   *Readded the "unncecessary" operations, and fixed an issue they had
-    in initial version.
- 1.0.3: Released on 04/07/2019
-   *Fixed new possible issues with the Audio module.
-   *Fixed an issue where clearing the required number of lines sometimes 
-    would not increase the hardship level.
- 1.0.4: Released on 04/07/2019
-   *Now disposing properly a lot of graphical objects, which it wasn't
-    previously. Found about it while using Mithran's debugger script.
- 1.0.5: Released on 07/07/2019
-   *Performance update. In previous version, all stats (level, deleted lines,
-    scores, etc) were redrawn whenever one of them changes, causing some lag.
-    Now, it redraws only the part that needs to be redrawn, as it should be.
-    Did other improvements too.
- 1.0.6 Released on 07/07/2019
-   *Cleared one visual bug, that came with 1.0.5, and failed to detect it
-    initially.
- 1.0.7 Released on 09/07/2019
-   *Fixed small visual bug.
-   *Removed my edit on the Audio module, as I found out the engine
-    have methods that do (and do it better) what my edit of the module
-    was set to do.
- 1.0.8 Released on 10/07/2019
-   *Now, when loading older save file, the Tetris script will asume initial
-    values for contents that are otherwise extracted from the save file.
-   *Now properly initializing Tetris data upon starting new game, which it
-    wasn't previously.
-   *Improved the action counter, so it counts only successful actions.
-   *Other small bug fixes.
-   *Some code optimisation.
+ 
  1.1.0 Released on 16/07/2019
    *New Option in the "General Options": Make your own tetromino spawning bags!
    *Improved a bit the code about text positioning in "Window Block 1", so
     changing font or block sizes would not ruin it.
    *Small code optimisations.
+ 1.1.1 Released on 21/07/2019
+   *Now the field is one single sprite, and the building blocks are its
+    rectangles. In previous version each building block had its own sprite.
+    That doesn't change the Tetris appearance.
+   *Did more code optimisations.
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
@@ -163,12 +151,11 @@ module GGZiron_Tetris
     0 =>[0, 1, 2, 3, 4, 5, 6, 7],
 # Add more entries. 
 
-
 # Possible second and third entries:
-# 1 =>[0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7],
-# 2 =>[0], #Fully random.
+#   1 =>[0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7],
+#   2 =>[0], #Fully random.
 # You can also give symbol keys as shown bellow:
-# :favorite_tetroes => [1, 2, 3, 4]
+#   :favorite_tetroes => [1, 2, 3, 4]
 
   } #Do not delete this line!!!
   
@@ -659,14 +646,14 @@ module GGZiron_Tetris
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   class << self
-    attr_accessor :window_info,         :clock,            :menu_tetris_enabled
-    attr_accessor :clock_set_bgm,       :pause,            :next_input_reaction_clock
-    attr_accessor :menu_tetris_display, :next_event
+    attr_accessor :window_info,   :menu_tetris_enabled,       :clock
+    attr_accessor :clock_set_bgm, :next_input_reaction_clock, :pause
+    attr_accessor :next_event,    :menu_tetris_display
     
-    attr_reader   :best_scores,         :last_game_scores, :total_deleted_lines
-    attr_reader   :scores,              :deleted_lines,    :level 
-    attr_reader   :total_frames,        :actions,          :total_actions
-    attr_reader   :best_scores,         :speed
+    attr_reader   :best_scores,   :last_game_scores,          :speed
+    attr_reader   :total_actions, :deleted_lines,             :level 
+    attr_reader   :total_frames,  :actions,                   :scores
+    attr_reader   :best_scores,   :total_deleted_lines
     
     def initialize_data
       @best_scores, @total_frames, @total_actions = 0, 0, 0
@@ -746,17 +733,14 @@ module GGZiron_Tetris
     end
     
     def create_spawning_bag
-      @bag_holder ||= Hash.new
-      if  GGZiron_Tetris::SPAWNING_BAGS && @bag_holder.empty? 
-        bags = GGZiron_Tetris::SPAWNING_BAGS
-        bags.each{ |key, value| @bag_holder[key] = value.dup}
-      end 
-      if @bag_holder.empty?
+      bags = GGZiron_Tetris::SPAWNING_BAGS
+      if bags.empty?
         @spawning_bag = 0, 1, 2, 3, 4, 5, 6, 7
       else
-        keys = Array.new
-        @bag_holder.each_key{|key| keys << key}
-        @spawning_bag = @bag_holder.delete(keys[random_number(keys.size)])
+        @keys ||= Array.new
+        bags.each_key{|key| @keys << key} if @keys.empty?
+        key = @keys.delete_at(random_number(@keys.size))
+        @spawning_bag = bags[key].dup
       end  
     end
     
@@ -781,7 +765,7 @@ module GGZiron_Tetris
       @clock_set_bg, @actions             = nil, nil
       @clock_set_bgm, @deleted_lines      = nil, nil
       @pause, @new_record                 = nil, nil
-      @next_event, @spawning_bag          = nil, nil
+      @next_event, @keys                  = nil, nil
       @bag_holder, @window_info           = nil, nil
       @new_record, @speed                 = nil, nil
     end
@@ -883,12 +867,12 @@ module GGZiron_Tetris
       w =  columns * block_size
       h =  rows * block_size
       create_viewport(x, y, w, h, z)
-      tetris_bitmap
+      tetris_bitmap(w, h)
     end  
     
     def take_row(row_index = 0)
       row = Array.new
-      for i in 0...@columns do row << @field[i][row_index]; end  
+      for i in 0...@columns do row << @building_blocks[i][row_index]; end  
       row
     end  
     
@@ -909,14 +893,14 @@ module GGZiron_Tetris
       GGZiron_Tetris::BLOCK_SIZE + GGZiron_Tetris::BLOCKS_DISTANCE 
     end  
     
-    def tetris_bitmap
-      @field = Array.new
+    def tetris_bitmap(w, h)
+      @field = Sprite.new(@viewport)
+      @field.bitmap = Bitmap.new(w, h)
+      @building_blocks = Array.new
       for x in 0...@columns do  #x may represent row, but is column walker
-        @field << Array.new
+        @building_blocks[x] = Array.new
         for y in 0...@rows do  #y represent column, but is row walker
-          @field[x] << Building_Block.new(@viewport)
-          @field[x][y].x = x
-          @field[x][y].y = y
+          @building_blocks[x] << Building_Block.new(@field, x, y)
         end 
       end
       Graphics.update
@@ -938,18 +922,13 @@ module GGZiron_Tetris
     def display_tetromino(tetromino_id = 0)
       clear_tetromino if @tetromino
       return  if tetromino_id == 0
-      @tetromino = Tetromino_Base.new(@field, tetromino_id )
+      @tetromino = Tetromino_Base.new(@building_blocks, tetromino_id )
       @tetromino.spawn
     end 
     
     def delete_field
-      for x in 0...@columns do
-        for y in 0...@rows do
-          @field[x][y].dispose
-        end  
-      end
+      @field.dispose
       @field_background.dispose
-      @field = nil
     end  
     
     def show_hide_field(value = true)
@@ -1781,29 +1760,44 @@ module GGZiron_Tetris
   class Building_Block
     
     attr_accessor :on_fall
+    attr_reader   :x, :y, :value
+    
+    def initialize(field, x, y)
+      @field = field
+      create_rect(x, y)
+      @on_fall = false
+      self.value = 0 
+    end
+    
+    def create_rect(x, y)
+      @rect = Rect.new
+      self.x = x; self.y = y
+      @rect.height = block_size
+      @rect.width = block_size
+    end  
     
     def value=(value)
       @value = value
       @value = 0 unless @value.between?(0 ,7)
       color = GGZiron_Tetris.generate_color(GGZiron_Tetris::COLORS[@value])
-      @sprite.bitmap.fill_rect( @sprite.bitmap.rect, color)
-    end  
-    
-    def initialize(viewport)
-      @sprite = Sprite.new(viewport)
-      @sprite.bitmap = Bitmap.new(block_size, block_size )
-      @on_fall = false
-      self.value = 0 
+      @field.bitmap.fill_rect( @rect, color)
     end 
     
-	  def x; @x;                                                                     end
-    def y; @y;                                                                     end
-    def value; @value;                                                             end
-    def dispose; @sprite.dispose;                                                  end 
-    def block_size; GGZiron_Tetris::BLOCK_SIZE;                                    end  
-    def block_distance; GGZiron_Tetris::BLOCKS_DISTANCE;                           end 
-    def x=(value); @x = value; @sprite.x = value * ( block_size + block_distance); end 
-    def y=(value); @y = value; @sprite.y = value * ( block_size + block_distance); end
+    def x=(value) 
+      @x = value
+      @rect.x = value * ( block_size + block_distance) 
+    end
+    
+    def y=(value) 
+      @y = value 
+      @rect.y = value * ( block_size + block_distance) 
+    end
+    
+    def dispose; @sprite.dispose;                        end 
+    def block_size; GGZiron_Tetris::BLOCK_SIZE;          end  
+    def block_distance; GGZiron_Tetris::BLOCKS_DISTANCE; end 
+
+    
 	
   end  #Building_Block
   
