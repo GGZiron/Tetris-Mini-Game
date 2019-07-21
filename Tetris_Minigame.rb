@@ -1792,8 +1792,7 @@ module GGZiron_Tetris
       @y = value 
       @rect.y = value * ( block_size + block_distance) 
     end
-    
-    def dispose; @sprite.dispose;                        end 
+
     def block_size; GGZiron_Tetris::BLOCK_SIZE;          end  
     def block_distance; GGZiron_Tetris::BLOCKS_DISTANCE; end 
 
