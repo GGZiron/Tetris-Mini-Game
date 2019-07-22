@@ -7,7 +7,7 @@ module GGZiron_Tetris
  Author: GGZiron.
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
- Version 1.1.1
+ Version 1.1.2
  Terms of use: Free for comercial and non comercial project. Free to edit,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
@@ -47,6 +47,9 @@ module GGZiron_Tetris
     rectangles. In previous versions each building block had its own sprite.
     That doesn't change the Tetris appearance.
    *Did more code optimisations.
+ 1.1.2 Released on 22/07/2019
+   *Fixed a method, that was set to work with previous version objects,
+    that would lead to game crash upon starting new game after game over..
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
@@ -906,8 +909,8 @@ module GGZiron_Tetris
     def clear_field
       for x in 0...@columns do 
         for y in 0...@rows do
-          @field[x][y].value = 0;
-          @field[x][y].on_fall = false
+          @building_blocks[x][y].value = 0;
+          @building_blocks[x][y].on_fall = false
         end
       end  
     end  
