@@ -49,7 +49,7 @@ module GGZiron_Tetris
    *Did more code optimisations.
  1.1.2 Released on 22/07/2019
    *Fixed a method, that was set to work with previous version objects,
-    that would lead to game crash upon starting new game after game over..
+    that would lead to game crash upon starting new game after game over.
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
