@@ -337,12 +337,11 @@ module GGZiron_Tetris
 # tetris field, that could be seen as border color between squares, if blocks 
 # have distance of at least one pixel.
 
+  BACKGROUND_PICTURE = "Graphics/Titles1/Tower2"
 # Write the full path of the picture,starting from game directory. 
 # The file extention can be omited when writing the file name. 
 # For working example, see the default value.
-
-  BACKGROUND_PICTURE = "Graphics/Titles1/Tower2"
-  #set to nil or false, if you are not going to use background picture.
+# Set to nil or false, if you are not going to use background picture.
 
 # ===========================================================================
 #                          AUDIO OPTIONS
