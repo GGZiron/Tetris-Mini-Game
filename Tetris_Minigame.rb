@@ -29,9 +29,6 @@ module GGZiron_Tetris
  Alternatively, you can report an issue here:
  https://github.com/GGZiron/Tetris-Mini-Game/issues
  
- Link to my script thread: 
- https://forums.rpgmakerweb.com/index.php?threads/tetris-mini-game.110592/
- 
  For full Version History, including all changes between 1.0.0 and 1.1.0,
  open this site: 
  
