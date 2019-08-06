@@ -6,8 +6,8 @@ Terms of use: Free for commercial and non commercial projects*.
 Free to edit, but keep my part of the header, and don't claim the script is yours. 
 You have to credit me as GGZiron. 
 Update: Added GNU General Public License v3.0, which basically permits the same things.
-You can review it here: https://github.com/GGZiron/Tetris-Mini-Game/blob/master/LICENSE
 
+You can review it here: https://github.com/GGZiron/Tetris-Mini-Game/blob/master/LICENSE
 And here: https://www.gnu.org/licenses/gpl-3.0.html
 
 *All the terms listed above are only for my script. The very Tetris is owned
