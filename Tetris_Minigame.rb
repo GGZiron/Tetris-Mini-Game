@@ -8,17 +8,22 @@ module GGZiron_Tetris
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
  Version 1.1.2
- Terms of use: Free for comercial and non comercial project. Free to edit,
+ Terms of use: Free for comercial and non comercial project. Free to edit*,
  but keep my part of the header, and don't claim the script is yours.
  You have to credit me as GGZiron.
  
  This script is licensed under GNU General Public License v3.0
  To see more about it, check here:
  https://github.com/GGZiron/Tetris-Mini-Game/blob/master/LICENSE
- and and here:
+ and here:
  https://www.gnu.org/licenses/gpl-3.0.html
  
- 
+*All the terms listed above are only for my script. The very Tetris is owned
+ by "The Tetris Company". I do not know what part of the Tetris is patented 
+ and what part is not, so you have to do your research, if you are going to 
+ include my script in your project. I suggest at very least, to not use the 
+ name "Tetris". 
+
  The idea to make tetris script came from Neo_Kum0rius_6000's script request 
  thread, although I started my tetris several months later. 
  
