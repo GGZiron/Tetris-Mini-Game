@@ -68,7 +68,7 @@ module GGZiron_Tetris
    *Reorginized and reworked code, so now is more readible, and hopefully,
     more effective.
    *Renamed the menu button for playing Tetris, so it does not use the
-    word "Tetris"
+    word "Tetris".
    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
