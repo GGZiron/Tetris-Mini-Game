@@ -11,5 +11,8 @@ You can review it here: https://github.com/GGZiron/Tetris-Mini-Game/blob/master/
 
 And here: https://www.gnu.org/licenses/gpl-3.0.html
 
-*All the terms listed above are only for my script. The very Tetris is owned
-by "The Tetris Company". I do not know what part of the Tetris is patented and what part is not, so you have to do your research, if you are going to include my script in your project. I suggest at very least, to not use the name "Tetris".
+*All the terms listed above are only for the usage of this script. 
+The very Tetris is owned by "The Tetris Company". I do not know what 
+part of the Tetris is patented and what part is not, so you have to do 
+your research, if you are going to include my script in your project. 
+I suggest at very least, to not use the name "Tetris".
