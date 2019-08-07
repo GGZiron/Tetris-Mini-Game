@@ -59,7 +59,7 @@ module GGZiron_Tetris
  1.1.2 Released on 22/07/2019
    *Fixed a method, that was set to work with previous version objects,
     that would lead to game crash upon starting new game after game over.
- 1.2.0
+ 1.2.0 Released on 07/08/2019
    *Added option for setting max level.
    *Every window now have padding option
    *Option to set respawn speed and row deletion speed.
