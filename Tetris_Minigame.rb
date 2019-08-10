@@ -7,7 +7,7 @@ module GGZiron_Tetris
  Author: GGZiron.
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
- Version 1.2.0
+ Version 1.2.1
  Terms of use: Free for comercial and non comercial project. * 
  Free to edit, but keep my part of the header, and don't claim the 
  script is yours. You have to credit me as GGZiron.
@@ -69,7 +69,7 @@ module GGZiron_Tetris
     more effective.
    *Renamed the menu button for playing Tetris, so it does not use the
     word "Tetris".
-   
+
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene. As classical Tetris, it has 9 levels, and the
  last one is endless.
@@ -1837,8 +1837,8 @@ module GGZiron_Tetris
         if (!new_x.between?(0, 9) || !new_y.between?(0, 19))
           if (new_x == (-1) || new_x == 10 || new_y == (-1))
             return wall_kick(x_offset, y_offset, dir_multiplier) unless recursive
-            return false
           end
+        return false
         end
         new_block = block(new_x, new_y)
         if (new_block.value > 0 && !new_block.on_fall)
