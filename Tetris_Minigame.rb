@@ -7,7 +7,7 @@ module GGZiron_Tetris
  Author: GGZiron.
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
- Version 1.2.1
+ Version 1.3.0
  Terms of use: Free for comercial and non comercial project. * 
  Free to edit, but keep my part of the header, and don't claim the 
  script is yours. You have to credit me as GGZiron.
@@ -24,7 +24,7 @@ module GGZiron_Tetris
  your research, if you are going to include my script in your project. 
  I suggest at very least, to not use the name "Tetris".
  
- With 1.2.0 version code, you cannot copy paste the entire settings header
+ With 1.3.0 version code, you cannot copy paste the entire settings header
  from previous version, and hope the code to work. It will not, as now
  it expect more entries from the options. So, copy paste existent entries
  from older version one by one instead.
@@ -69,10 +69,26 @@ module GGZiron_Tetris
     more effective.
    *Renamed the menu button for playing Tetris, so it does not use the
     word "Tetris".
-
+  1.3.0 Released on 07/08/2019
+   *New feature: Highligh deletion row. Comes with extra settings for it,
+    including new color entry in the COLORS.
+   *Added option that BGM and BGS position from normal RPG game not to be 
+    restored, so tracks would replay from begining. By default, now they won't
+    recover position, but can be changed.
+   *Added option to modify the clearing rectangle (to add or substract to
+    original values), so there are not uncleaned pixels on stats change.
+    Stats are the level, actions, scores, etc. On default font no need to
+    modify, but you might need if you set different fonts.
+   *Fixed bug that came with version 1.2.0: crash client when trying to rotate
+    too close to obstacle. 
+   *Fixed bug, which would draw next Tetromino on resume, doing that each time
+    the player resumes the game. Bug game with version 1.2.0.
+   *Cleared bug, which would lead to crash if developer decides not to include 
+    background picture. Bug came with version 1.2.0 too.
+   *Small optimisations of the code. 
+    
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
- That happens on it's own scene. As classical Tetris, it has 9 levels, and the
- last one is endless.
+ That happens on it's own scene.
  
  Hardship to use : Vary.
  If you are happy with my Tetris as it is, then is plug and play. Easy.
@@ -93,7 +109,7 @@ module GGZiron_Tetris
  Once blocks are spawned upon, shaping a field, they never move, they only 
  change colors, forming tetromino figures, that looks like moving, rotating and 
  falling down with certain speed. All that is achieved via controlled recoloring.
- *With version 2.1.0, you can change how many levels the game to have.
+ *With version 1.2.0, you can change how many levels the game to have.
  
  Default tetrominoes spawn order is as follows: There is virtual bag ( array )
  of all 7 pieces plus one fully random piece, which make bag of 8 pieces. 
@@ -116,8 +132,7 @@ module GGZiron_Tetris
  can set also backgrounds color or background picture. You can alter window
  sizes, window positions, their opacity, font sizes in them and more.
  
- The entry bellow comes with my initial version, many stuffs are imrpoved since
- then:
+ The entry bellow comes with my initial version:
   Some flaws on my script: 
   For some stuffs I use my own methods than standard methods provided from 
   the very engine. Is not because I find my methods superior, but because I am 
@@ -175,6 +190,17 @@ module GGZiron_Tetris
 # file, as each color have index, starting from 0. The default 
 # value of 2 with default Window.png would produce orange text color.
 
+  REMEMBER_BGM_BGS_POS = false
+# Comes with version 1.3.0
+# When true, will restore BGM and BGS position, when returning back to 
+# the RPG game. If false, it will restore tracks, but not the position.
+
+  ENABLE_HIGHTLIGHT_DELETION = true
+# If set to true, will apply color color over the row that is about to
+# be deleted. Also, will add time to the consumed deletion time, which
+# setting can be found in Time Flow options. 
+# Added with version 1.3.0
+  
   SPAWNING_BAGS = { #That option is introduced in version 1.1.0
     0 =>[0, 1, 2, 3, 4, 5, 6, 7], 
     #the "," after each entry is very important. Do not forget to put it.
@@ -252,15 +278,21 @@ module GGZiron_Tetris
 # When dropping the piece down, it waits as many seconds before accepting
 # new input again. Default is 0.03.
   
-  ROW_DELETION_SPEED = 0.32
+  ROW_DELETION_SPEED = 0.28
 # The time between row deletion and next event (which could be another row
-# deletion). Default is 0.32.
+# deletion). Default is 0.28.
+
+  HIGHLIGH_DELETED_ROW_TIME = 0.20
+# How much time to keep the highlited row, that is about to be deleted.
+# Keep in mind this time is added to ROW_DELETION_SPEED. Will not apply,
+# if highlighting is disabled. Default is 0.20
 
   TIME_FOR_RESPAWN = 0.13  #Default: 0.13
 # The time needed for new Tetromino to appear, once the previous is landed.
-# If line is cleared, the ROW_DELETION_SPEED will be added as many times, as
-# many lines the player cleared. That option wasn't aviable before version
-# 1.2.0, as before that this was handed with very messy code.
+# If line is cleared, the ROW_DELETION_SPEED and HIGHLIGHT_DELETED_ROW_TIME
+# will be added as many times, as many lines the player cleared. That option 
+# wasn't aviable before version 1.2.0, as before that this was handed with 
+# very messy code.
 
 
 # ===========================================================================
@@ -275,88 +307,94 @@ module GGZiron_Tetris
 
         
   COLORS ={ #Do not add more entries here, is not supported.
-      0 => { # Empy space on the Tetris Field. Do not edit this line.
+      0 => { # Empty space on the Tetris Field. Do not edit this line.
       
         #The script default is RGB value of metalic color.
-        "Red" => 161,   #Red value in RGB color
-        "Green" => 169, #Green value in RGB color
-        "Blue" => 169,  #Blue value in RGB color
+        "Red"   => 161,  #Red value in RGB color
+        "Green" => 169,  #Green value in RGB color
+        "Blue"  => 169,  #Blue value in RGB color
         "Alpha" => 255   #Alpa color's opacity
       },
   
       1 => { # O piece. Do not edit this line.
       
         #The script default is RGB value of yellow color.
-        "Red" => 255,   #Red value in RGB color
-        "Green" => 246, #Green value in RGB color
-        "Blue" => 0,  #Blue value in RGB color
+        "Red"   => 255,  #Red value in RGB color
+        "Green" => 246,  #Green value in RGB color
+        "Blue"  => 0,    #Blue value in RGB color
         "Alpha" => 255   #Alpa color's opacity
       },
   
       2 => { # L piece. Do not edit this line.
       
         #The script default is RGB value of orange color.
-        "Red" => 237,   #Red value in RGB color
+        "Red"   => 237, #Red value in RGB color
         "Green" => 135, #Green value in RGB color
-        "Blue" => 45,  #Blue value in RGB color
-        "Alpha" => 255   #Alpa color's opacity
+        "Blue"  => 45,  #Blue value in RGB color
+        "Alpha" => 255  #Alpa color's opacity
       },
   
       3 => { # J piece. Do not edit this line.
       
         #The script default is RGB value of blue color.
-        "Red" => 0,   #Red value in RGB color
-        "Green" => 0, #Green value in RGB color
-        "Blue" => 204,  #Blue value in RGB color
-        "Alpha" => 255   #Alpa color's opacity
+        "Red"   => 0,   #Red value in RGB color
+        "Green" => 0,   #Green value in RGB color
+        "Blue"  => 204, #Blue value in RGB color
+        "Alpha" => 255  #Alpa color's opacity
       },
   
       4 => { # I piece. Do not edit this line.
       
         #The script default is RGB value of teal color.
-        "Red" => 0,   #Red value in RGB color
+        "Red"   => 0,   #Red value in RGB color
         "Green" => 128, #Green value in RGB color
-        "Blue" => 128,  #Blue value in RGB color
-        "Alpha" => 255   #Alpa color's opacity
+        "Blue"  => 128, #Blue value in RGB color
+        "Alpha" => 255  #Alpa color's opacity
       },
 
       5 => { # S piece. Do not edit this line.
       
         #The script default is RGB value of green color.
-        "Red" => 102,   #Red value in RGB color
+        "Red"   => 102, #Red value in RGB color
         "Green" => 255, #Green value in RGB color
-        "Blue" => 0,  #Blue value in RGB color
-        "Alpha" => 255   #Alpa color's opacity
+        "Blue"  => 0,   #Blue value in RGB color
+        "Alpha" => 255  #Alpa color's opacity
       },
   
       6 => { # T piece. Do not edit this line.
       
         #The script default is RGB value of purple color.
-        "Red" => 191,   #Red value in RGB color
-        "Green" => 0, #Green value in RGB color
-        "Blue" => 255,  #Blue value in RGB color
-        "Alpha" => 255   #Alpa color's opacity
+        "Red"   => 191, #Red value in RGB color
+        "Green" => 0,   #Green value in RGB color
+        "Blue"  => 255, #Blue value in RGB color
+        "Alpha" => 255  #Alpa color's opacity
       },
   
       7 => { # Z piece. Do not edit this line.
       
         #The script default is RGB value of red color.
-        "Red" => 255,   #Red value in RGB color
-        "Green" => 8, #Green value in RGB color
-        "Blue" => 0,  #Blue value in RGB color
-        "Alpha" => 255   #Alpa color's opacity
+        "Red"   => 255, #Red value in RGB color
+        "Green" => 8,   #Green value in RGB color
+        "Blue"  => 0,   #Blue value in RGB color
+        "Alpha" => 255  #Alpa color's opacity
       },
-      
       8 => { # Background color. Do not edit this line.
       
         #The script default is RGB value of very dark blue color.
-        "Red" => 0,   #Red value in RGB color
-        "Green" => 0, #Green value in RGB color
-        "Blue" => 30,  #Blue value in RGB color
-        "Alpha" => 255   #Alpa color's opacity
-      } #Do not touch.
-    } #Do not touch. 
-    
+        "Red"   => 0,   #Red value in RGB color
+        "Green" => 0,   #Green value in RGB color
+        "Blue"  => 30,  #Blue value in RGB color
+        "Alpha" => 255, #Alpa color's opacity
+      }, #Do not touch.
+      9 => {# Highlight Color. Used to highlight deleted rows.
+        #Comes with version 2.3.0
+        #The script default is RGB value of white color.
+        "Red"   => 255,   #Red value in RGB color
+        "Green" => 255,   #Green value in RGB color
+        "Blue"  => 255,  #Blue value in RGB color
+        "Alpha" => 255, #Alpa color's opacity
+      } #Do not touch
+    } #Do not touch.
 
 # You can set the block size. That will alter the field size,
 # and the window size too, as they are derivative of the block size and
@@ -375,7 +413,7 @@ module GGZiron_Tetris
 # tetris field, that could be seen as border color between squares, if blocks 
 # have distance of at least one pixel.
 
-  BACKGROUND_PICTURE = "Graphics/Titles1/Tower2"
+ BACKGROUND_PICTURE = "Graphics/Titles1/Tower2"
 # Write the full path of the picture,starting from game directory. 
 # The file extention can be omited when writing the file name. 
 # For working example, see the default value.
@@ -419,6 +457,12 @@ module GGZiron_Tetris
   BGM_MUSIC_FADE_OUT = 2000  #in miliseconds  
 # The built-in audio fadeout method works in miliseconds, not frames.
 # There are 1000 miliseconds in one second.
+
+  SILENCE_ON_BGM_CHANGE = 3
+# This option comes with version 1.3.0.
+# How much to the Tetris to wait before starting new BGM music.
+# In previous versions used 1.5 multiplier to BGM_MUSIC_FADE_OUT,
+# which was quite silly.
   
   SOUNDS = { #Do not add entries here, is not supported.
     #Entry 1 -> Move Sound
@@ -516,6 +560,21 @@ module GGZiron_Tetris
 #      When set to nil, will use standard padding.
 #      Paddin comes with version 1.2.0
 
+# Bellow entries come with version 1.3.0
+# clx  The entries clx, clw and clh are to alter the clear rectangle for
+# clw  stats in the window block 1. Saw that in different fonts normal rect
+# clh  box doesn't always clean everything. 
+
+# clx adds(or substracts if negative) to initial x. If substract from initial x, 
+# is good idea to add same value to rectangle width. Entry clw adds or 
+# substracts to the width of the clearing rectangle. Entry clh adds or 
+# substracts to the height of the clearing rectangle. If there are no 
+# uncleaned pixels upon changing stats, then default rectangle is working, and 
+# better not to be touched. If there is the opposite problem, pixels from 
+# neighboring entries are eaten, then either you modifiend clx, clw and clh, 
+# either. The font size is too big or line distance too small. Apparently,
+# different fonts requare different spacings.
+
 # Do not add entry letters to windows, where they are not present.
 # If they are not present, then they are not supported there.
 
@@ -556,7 +615,10 @@ module GGZiron_Tetris
     :FS => 20,  
     :LD => 17,
     :P  => nil, #when nil, it will use standard_padding
+    #Do not touch those ▼ if there are not uncleaned pixels on stats change.
+    :clx => 0, :clw => 2, :clh => 0, #default: clx 0, clw 2, clh 0
   }
+
   
 # Window Pause is the third.
 # During playing tetris, it stays inactive, but activates as soon the 
@@ -696,7 +758,7 @@ module GGZiron_Tetris
 
   #script call support ▼
   class << self
-    attr_accessor :menu_tetris_enabled,  :menu_tetris_display
+    attr_accessor :menu_tetris_enabled, :menu_tetris_display  
     def total_deleted_lines; processor::total_deleted_lines end
     def best_scores;         processor::best_scores         end 
     def total_seconds;       processor::total_seconds       end  
@@ -733,7 +795,7 @@ module GGZiron_Tetris
         @window_block_2.set_handler(method(:game_over))
         @pause_window = w[3]
         create_field_links
-        set_into_bgm_clock
+        set_intro_bgm_clock
       end
       
       def initialize_data
@@ -749,10 +811,11 @@ module GGZiron_Tetris
         @pause, @new_record                 = true, false
         @spawned, @keys                     = false, Array.new
         @next_event                         = Graphics.frame_rate
+        create_spawning_bag
         set_speed
       end
       
-      def set_into_bgm_clock
+      def set_intro_bgm_clock
         @into_bgm_clock = Graphics.frame_rate
       end
       
@@ -762,13 +825,12 @@ module GGZiron_Tetris
       end  
 #  -------------------------- Starting Processes ---------------------------
      def start_game
-        create_spawning_bag
-        refresh_next_tetromino
+        after_game_over if game_over?
+        refresh_next_tetromino unless @next_field.tetromino
         @into_bgm_clock = -1
         Audio.me_stop
         Audio.bgm_stop
         @window_block_2.draw_control_contents 
-        after_game_over if game_over?
         @pause_window.unselect
         @pause_window.deactivate
         @tetris_window.activate
@@ -778,6 +840,7 @@ module GGZiron_Tetris
       end 
 #  --------------------------- Ending Processes -----------------------------   
       def end_game
+        @fiber = nil
         @last_game_scores = scores
       end  
     
@@ -792,9 +855,8 @@ module GGZiron_Tetris
         @clock_set_bgm, @deleted_lines      = nil, nil
         @pause, @new_record                 = nil, nil
         @next_event, @keys                  = nil, nil
-        @bag_holder, @window_info           = nil, nil
+        @bag_holder, @action_made           = nil, nil
         @new_record, @speed                 = nil, nil
-        @action_made                        = nil
       end
 #  ------------------------------- Getters ----------------------------------
       def base_fall_speed
@@ -809,19 +871,17 @@ module GGZiron_Tetris
         @total_frames / Graphics.frame_rate
       end  
   
-      def timer_seconds; total_seconds % 60; end
-      
-      def total_minutes; total_seconds / 60; end
-      
-      def timer_minutes; total_minutes % 60; end 
-      
-      def hours;  total_minutes / 60; end
+      def timer_seconds; total_seconds % 60 end
+      def total_minutes; total_seconds / 60 end
+      def timer_minutes; total_minutes % 60 end 
+      def hours;         total_minutes / 60 end
       
       def timer_to_string
         sprintf("%02d:%02d:%02d", hours, timer_minutes, timer_seconds)
       end  
       
-      def generate_color(c)
+      def generate_color(id)
+        c = COLORS[id]
         Color.new(c["Red"], c["Green"], c["Blue"], c["Alpha"])
       end 
     
@@ -861,8 +921,9 @@ module GGZiron_Tetris
       end  
       
       def game_over?
-        return false if !@main_field
-        return true if   @main_field.tetromino && @main_field.tetromino.game_over_flag
+        return false unless @main_field
+        return false unless @main_field.tetromino
+        return true if @main_field.tetromino.game_over_flag
         false
       end
 #  ----------------------- Audio Processes ----------------------------------
@@ -883,8 +944,9 @@ module GGZiron_Tetris
       end
       
       def fade_bgm
-        Audio.bgm_fade(BGM_MUSIC_FADE_OUT)
-        @clock_set_bgm = @total_frames + (BGM_MUSIC_FADE_OUT/1000.0) * Graphics.frame_rate * 1.5
+        fr = Graphics.frame_rate; fo = BGM_MUSIC_FADE_OUT
+        Audio.bgm_fade(fo)
+        @clock_set_bgm = @total_frames + (fo/1000.0) + fr * SILENCE_ON_BGM_CHANGE
       end
     
       def play_sound(sound_id)
@@ -945,7 +1007,7 @@ module GGZiron_Tetris
         @window_block_1.update_scores 
       end
       
-      def delete_line
+      def add_deleted_line
         @deleted_lines += 1
         @total_deleted_lines += 1
         add_level if (@deleted_lines % LINES_PER_LEVEL == 0 && @level < MAX_LEVEL)
@@ -1019,7 +1081,7 @@ module GGZiron_Tetris
         @pause_window.set_commands
         pause_tetris(false)
         end_game
-        set_into_bgm_clock
+        set_intro_bgm_clock
       end  
 
       def after_game_over
@@ -1029,7 +1091,7 @@ module GGZiron_Tetris
       end  
 #  -------------------------- Objects Interaction ---------------------------
       def refresh_stats
-        @window_block_1.draw_stats
+        @window_block_1.draw_all_stats
       end
     
       def clear_next_tetromino
@@ -1072,9 +1134,8 @@ module GGZiron_Tetris
       
       def field_check
         deleted_rows = 0
-        while @main_field.lowest_full_row_index > -1 do
-          @main_field.clear_line
-          delete_line
+        while @main_field.clear_line do
+          add_deleted_line
           set_next_event(ROW_DELETION_SPEED * Graphics.frame_rate)
           play_sound(4)
           deleted_rows += 1
@@ -1108,7 +1169,7 @@ module GGZiron_Tetris
         if @window_block_2.working?; @window_block_2.refresh; return end
         check_for_pause_press
         unless @pause
-          if game_over?; prep_a_game_over; return; end
+          if game_over?; prep_a_game_over; return end
           tup_tup
           @window_block_1.timer_check
         else
@@ -1164,10 +1225,6 @@ module GGZiron_Tetris
       @saved_bgs = RPG::BGS.last
     end  
   
-    def start_tetris
-      processor::start_game
-    end
-  
     def create_pause_window
       @pause_window = Window_Pause.new
       @pause_window.set_handler(:start_tetris, method(:start_tetris))
@@ -1180,7 +1237,7 @@ module GGZiron_Tetris
         @background.bitmap = Bitmap.new(picture)
       else
         @background.bitmap = Bitmap.new(Graphics.width, Graphics.height)
-        color = t_data.generate_color(t_data::COLORS[8])
+        color = processor::generate_color(8)
         @background.bitmap.fill_rect( @background.bitmap.rect, color)
       end
     end  
@@ -1195,7 +1252,6 @@ module GGZiron_Tetris
 	
     def create_block_2_window
       @window_block_2 = Window_Block2.new
-      
     end  
     
     def link_processor
@@ -1221,14 +1277,20 @@ module GGZiron_Tetris
       @background.dispose
 	    Audio.bgm_stop
       super
-      @saved_bgm.replay if @saved_bgm
-      @saved_bgs.replay if @saved_bgs
+      restore_bgm
     end 
     
-    def dispose_main_viewport;             end
-    def prep_new_game; processor::set_game end
-    def picture;       BACKGROUND_PICTURE  end
-    def processor;     Tetris_Process      end  
+    def restore_bgm
+      rbbp = GGZiron_Tetris::REMEMBER_BGM_BGS_POS
+      (rbbp ? @saved_bgm.replay : @saved_bgm.play) if @saved_bgm
+      (rbbp ? @saved_bgs.replay : @saved_bgm.play) if @saved_bgs
+    end  
+    
+    def dispose_main_viewport;                end
+    def start_tetris;  processor::start_game  end
+    def prep_new_game; processor::set_game    end
+    def picture;       BACKGROUND_PICTURE     end
+    def processor;     Tetris_Process         end  
     
   end #Scene_Tetris
     
@@ -1246,20 +1308,14 @@ module GGZiron_Tetris
       w =  columns * block_size
       h =  rows * block_size
       create_viewport(x, y, w, h, z)
-      tetris_bitmap(w, h)
-    end  
-    
-    def take_row(row_index = 0)
-      row = Array.new
-      for i in 0...@columns_count do row << @building_blocks[i][row_index]; end  
-      row
+      make_field(w, h)
     end  
     
     def create_field_background(w, h)
       @field_background = Sprite.new(@viewport)
       @field_background.bitmap = Bitmap.new(w, h)
-      color = Tetris_Process::generate_color(COLORS[8])
-      @field_background.bitmap.fill_rect( @field_background.bitmap.rect, color)
+      color = processor::generate_color(8)
+      @field_background.bitmap.fill_rect(@field_background.bitmap.rect, color)
     end  
     
     def create_viewport(x, y, w, h, z)
@@ -1269,14 +1325,13 @@ module GGZiron_Tetris
     end  
     
     def block_size
-      Tetris_Process::block_size_with_border
+      processor::block_size_with_border
     end  
     
-    def tetris_bitmap(w, h)
+    def make_field(w, h)
       @field = Sprite.new(@viewport)
       @field.bitmap = Bitmap.new(w, h)
       @building_blocks = Array.new
-      @rows = Array.new
       for x in 0...@columns_count do #x may represent row, but is column walker
         @building_blocks[x] = Array.new
         for y in 0...@rows_count do  #y represent column, but is row walker
@@ -1284,22 +1339,13 @@ module GGZiron_Tetris
         end 
       end
     end
-        
-    def move_all_rows(bottom_line)
-      for i in 0..bottom_line
-        y = bottom_line - i
-        return @rows[y].delete_row if y == 0
-        return unless @rows[y].any?
-        @rows[y].take_from(@rows[y-1])
-      end  
-    end  
     
     def clear_tetromino
       @tetromino.clear_tetromino if @tetromino
     end  
     
     def display_tetromino(tetromino_id = 0)
-      clear_tetromino if @tetromino
+      clear_tetromino
       return  if tetromino_id == 0
       @tetromino = Tetromino_Base.new(@building_blocks, tetromino_id )
       @tetromino.spawn
@@ -1315,6 +1361,8 @@ module GGZiron_Tetris
       @viewport.visible = value
     end  
     
+    def processor; Tetris_Process end
+    
   end #Tetris_Field_Base
   
 # ===========================================================================
@@ -1326,14 +1374,35 @@ module GGZiron_Tetris
     def initialize(x, y, rows, columns, z)
       super
       create_rows
+      create_highlighter(columns)
+    end 
+    
+    def create_highlighter(columns)
+      @highlight = Sprite.new(@viewport)
+      width = columns * processor::block_size_with_border
+      @highlight.bitmap = Bitmap.new(width, BLOCK_SIZE)
+      rect = @highlight.bitmap.rect
+      @highlight.bitmap.fill_rect(rect, processor::generate_color(9))
+      @highlight.visible = false
+    end  
+    
+    def delete_field
+      @highlight.bitmap.dispose; @highlight.dispose
+      super
+    end  
+    
+    def take_row(row_index = 0)
+      row = Array.new
+      for i in 0...@columns_count do row << @building_blocks[i][row_index]; end  
+      row
     end  
     
     def clear_field
       @tetromino.deactivate if @tetromino
       for x in 0...@columns_count do 
         for y in 0...@rows_count do
-          @building_blocks[x][y].value = 0
-          @building_blocks[x][y].on_fall = false
+          @building_blocks[x][y].color_id = 0
+          @building_blocks[x][y].active = false
         end
       end  
     end  
@@ -1350,22 +1419,38 @@ module GGZiron_Tetris
       @tetromino.spawn
     end
       
-    def lowest_full_row_index # return -1 if none
-      @rows.each_index do |index|
-        y = (@rows.size - 1) - index
-        return y if @rows[y].full?
-      end
-      return -1
+    def lowest_full_row
+      @rows.reverse.find do |row| row.full?  end
     end
     
-    def clear_line(clear_y = lowest_full_row_index)
-      return if clear_y == -1
-      return @rows[clear_y].delete_row if clear_y == 0
-      move_all_rows(clear_y) 
-    end
+    def move_all_rows(bottom_line)
+      for i in 0..bottom_line
+        y = bottom_line - i
+        return @rows[y].clear_row if y == 0
+        return unless @rows[y].any?
+        @rows[y].take_from(@rows[y-1])
+      end  
+    end  
+    
+    def highlight(y)
+      @highlight.y = y * processor::block_size_with_border
+      @highlight.visible = true
+      frames = (Graphics.frame_rate * HIGHLIGH_DELETED_ROW_TIME).floor
+      frames.times do Fiber.yield end
+    end  
+    
+    def clear_line(row = lowest_full_row)
+      return false unless row
+      y = row.blocks[0].y
+      highlight(y) if ENABLE_HIGHTLIGHT_DELETION
+      y == 0? row.clear_row : move_all_rows(y)
+      @highlight.visible = false
+      return true
+    end  
     
     def display_tetromino; end
-    
+
+      
   end #Tetrus_Field  
     
 # ===========================================================================
@@ -1380,11 +1465,12 @@ module GGZiron_Tetris
       x = TETRIS_FIELD[:X]; y = TETRIS_FIELD[:Y]; p = TETRIS_FIELD[:P]
       p = standard_padding unless p
       border = 5
-      w = (block_size * 10) + 2 * (p + border); h = (block_size * 20) + 2 * (p + border)
+      w = (block_size * 10) + 2 * (p + border) 
+      h = (block_size * 20) + 2 * (p + border)
       super(x, y, w, h)
       self.opacity = TETRIS_FIELD[:T]
       self.padding = p
-      tetris_bitmap(x + 5, y + 5, 100)
+      tetris_bitmap(x + border, y + border, 100)
     end
       
     def block_size
@@ -1417,7 +1503,7 @@ module GGZiron_Tetris
       self.opacity = WINDOW_BLOCK_1[:T]
       self.padding = p
       contents.font.size  = WINDOW_BLOCK_1[:FS]
-      create_field; draw_stats
+      create_field; draw_all_stats
     end  
   
     def create_field
@@ -1444,61 +1530,44 @@ module GGZiron_Tetris
     def update_level(init = true)
       vocab = VOCAB[:level]
       str_1 = vocab + symb_add; str_2 = level
-      width = text_size(str_1).width
-      clwidth = text_size(str_2).width + 1
-      height = text_size(str_1).height
-      contents.clear_rect(width, initial_y, width, height) 
-      draw_text_ex(0, initial_y, str_1) if init
-      draw_text_ex(width, initial_y, str_2)
+      y = find_line_y(0)
+      line_part_1(str_1, y, init)
+      line_part_2(str_1, str_2, y, init)
     end  
     
     def update_actions(init = false)
       vocab = VOCAB[:actions]
       str_1 = vocab + symb_add; str_2 = actions
-      width = text_size(str_1).width
-      clwidth = text_size(str_2).width + 1
-      height = text_size(str_1).height
-      contents.clear_rect(width, initial_y + line_distance, clwidth, height) 
-      draw_text_ex(0, initial_y + line_distance, str_1) if init
-      draw_text_ex(width, initial_y + line_distance, str_2)
+      y = find_line_y(1)
+      line_part_1(str_1, y, init)
+      line_part_2(str_1, str_2, y, init)
     end  
     
     def update_cleared_lines(init = false)
       vocab = VOCAB[:cleared_lines]
       str_1 = vocab + symb_add; str_2 = deleted_lines
-      width = text_size(str_1).width
-      clwidth = text_size(str_2).width + 1
-      height = text_size(str_1).height
-      contents.clear_rect(width, initial_y + line_distance * 2, clwidth, height)
-      draw_text_ex(0, initial_y + line_distance * 2, str_1) if init
-      draw_text_ex(width, initial_y + line_distance * 2, str_2)
+      y = find_line_y(2)
+      line_part_1(str_1, y, init)
+      line_part_2(str_1, str_2, y, init)
     end  
     
     def update_scores(init = false)
       vocab = VOCAB[:scores]
       str_1 = vocab + symb_add; str_2 = scores.to_s
-      width = text_size(str_1).width
-      clwidth = text_size(str_2).width + 1
-      height = text_size(str_1).height
-      contents.clear_rect(width, initial_y + line_distance * 3, clwidth, height) 
-      draw_text_ex(0, initial_y + line_distance * 3, str_1) if init
+      y = find_line_y(3)
+      line_part_1(str_1, y, init)
       contents.font.color = text_color(best_scores_color) if processor.new_record?
-      width = text_size(str_1).width
-      draw_text_ex(width, initial_y + line_distance * 3, str_2)
+      line_part_2(str_1, str_2, y, init)
       contents.font.color = normal_color
     end  
     
     def update_best_scores(init = false)
       vocab = VOCAB[:best_scores]
       str_1 = vocab + symb_add; str_2 = best_scores.to_s
-      width = text_size(str_1).width
-      clwidth = text_size(str_2).width + 1
-      height = text_size(str_1).height
-      contents.clear_rect(width, initial_y + line_distance * 4, clwidth, height) 
-      draw_text_ex(0, initial_y + line_distance * 4, str_1) if init
+      y = find_line_y(4)
+      line_part_1(str_1, y, init)
       contents.font.color = text_color(best_scores_color) if processor.new_record?
-      width = text_size(str_1).width
-      draw_text_ex(width, initial_y + line_distance * 4, str_2)
+      line_part_2(str_1, str_2, y, init)
       contents.font.color = normal_color
     end  
     
@@ -1507,16 +1576,33 @@ module GGZiron_Tetris
       vocab = VOCAB[:timer]
       str_1 = vocab + symb_add
       str_2 = processor.timer_to_string
-      width = text_size(str_1).width
-      clwidth = text_size(str_2).width + 1
-      height = text_size(str_1).height
-      contents.clear_rect(width, initial_y + line_distance * 5, clwidth, height)
-      draw_text_ex(0, initial_y + line_distance* 5, str_1) if init
-      width = text_size(vocab + symb_add).width
-      draw_text_ex(width, initial_y + line_distance * 5, str_2)
+      y = find_line_y(5)
+      line_part_1(str_1, y, init)
+      line_part_2(str_1, str_2, y, init)
+    end
+    
+    def line_part_1(str_1, y, init)
+      draw_stat(y, str_1) if init
+    end
+    
+    def line_part_2(str_1, str_2, y, init)
+      contents.clear_rect(make_rect(str_1, str_2, y))
+      draw_stat(y, str_2, str_1)
+    end  
+
+    def make_rect(str_1, str_2, y)
+      x = text_size(str_1).width + WINDOW_BLOCK_1[:clx]
+      w = text_size(str_2).width + WINDOW_BLOCK_1[:clw]
+      h = text_size(str_2).height + WINDOW_BLOCK_1[:clh]
+      Rect.new(x, y, w, h)
+    end 
+    
+    def draw_stat(y, str, str_for_x = "")
+      x = text_size(str_for_x).width
+      draw_text_ex(x, y, str)
     end  
         
-    def draw_stats
+    def draw_all_stats
       contents.clear
       contents.font.color = normal_color
       draw_text_ex(0, 0, VOCAB[:next_tetro] + VOCAB[:added_symbol])
@@ -1525,6 +1611,7 @@ module GGZiron_Tetris
       update_scores(true); update_best_scores(true); update_timer(true)
     end  
    
+    def find_line_y(id);    initial_y + line_distance * id      end
     def initial_y;          contents.font.size + block_size * 3 end                         
 	  def line_distance;      WINDOW_BLOCK_1[:LD]                 end
     def best_scores_color;  BEST_SCORES_TEXT_COLOR              end
@@ -1563,7 +1650,7 @@ module GGZiron_Tetris
       @start_resume = value
       refresh
     end  
-  
+ 
     def make_command_list
       add_command(@start_resume, :start_tetris)
       add_command(VOCAB[:exit_scene], :exit)
@@ -1680,25 +1767,23 @@ module GGZiron_Tetris
     
     #checks if row is full.
     def full?
-      @blocks.each do |block| return false if block.value == 0; end 
-      return true
+      @blocks.all? do |block| block.color_id > 0 end
     end
     
     def any?
-      @blocks.each do |block| return true if block.value > 0;  end
-      return false
+      @blocks.any? do |block| block.color_id > 0 end
     end  
     
     #takes the color values of other row
     def take_from(the_other_row)
       @blocks.each_index do |x|
-        @blocks[x].value = the_other_row.blocks[x].value
+        @blocks[x].color_id = the_other_row.blocks[x].color_id
       end
     end 
     
     #deletes the color values within the row
-    def delete_row
-      @blocks.each do |block| block.value = 0; end
+    def clear_row
+      @blocks.each do |block| block.color_id = 0 end
     end  
       
   end #Tetris_Row
@@ -1757,17 +1842,17 @@ module GGZiron_Tetris
     def assign_block(index, x, y)
       @tetromino_blocks[index] = block(x, y)
       @game_over_flag = true unless can_spawn?(x, y)
-      @tetromino_blocks[index].value = @type
-      @tetromino_blocks[index].on_fall = true
+      @tetromino_blocks[index].color_id = @type
+      @tetromino_blocks[index].active = true
     end 
     
     def can_spawn?(x, y)
-      (block(x, y).value == 0)
+      (block(x, y).color_id == 0)
     end  
 
     def clear_tetromino
       @tetromino_blocks.each do |block|
-        block.value = 0; block.on_fall = false
+        block.color_id = 0; block.active = false
       end
     end
     
@@ -1786,7 +1871,7 @@ module GGZiron_Tetris
     end
     
     def block(x, y); 
-      @rows[y].blocks[x];
+      @rows[y].blocks[x]
     end
 
     def move_left;  move(-1, 0); end
@@ -1802,7 +1887,7 @@ module GGZiron_Tetris
       tetromino.each_index do |i|
         x = tetromino[i].x;  y = tetromino[i].y
         tetromino[i] = block(x + x_offset, y + y_offset)
-        tetromino[i].value = @type; tetromino[i].on_fall = true
+        tetromino[i].color_id = @type; tetromino[i].active = true
       end
       return true
     end  
@@ -1810,7 +1895,7 @@ module GGZiron_Tetris
     def assign_squares(new_shape)
       @tetromino_blocks = new_shape
       @tetromino_blocks.each do |block|
-        block.value = @type; block.on_fall = true 
+        block.color_id = @type; block.active = true 
       end  
     end
     
@@ -1819,7 +1904,7 @@ module GGZiron_Tetris
         return false if !(block.y + y_offset).between?(0, 19)
         return false if !(block.x + x_offset).between?(0, 9)
         next_block = self.block(block.x + x_offset, block.y + y_offset)
-        return false unless next_block.value == 0 || next_block.on_fall
+        return false unless next_block.color_id == 0 || next_block.active
       end 
       return true
     end
@@ -1838,10 +1923,10 @@ module GGZiron_Tetris
           if (new_x == (-1) || new_x == 10 || new_y == (-1))
             return wall_kick(x_offset, y_offset, dir_multiplier) unless recursive
           end
-        return false
+          return false
         end
         new_block = block(new_x, new_y)
-        if (new_block.value > 0 && !new_block.on_fall)
+        if (new_block.color_id > 0 && !new_block.active)
           return wall_kick(x_offset, 0, dir_multiplier) unless recursive
           return false
         end 
@@ -1877,7 +1962,7 @@ module GGZiron_Tetris
      
     def deactivate
       @game_over_flag = false
-      @tetromino_blocks.each do |block| block.on_fall = false; end
+      @tetromino_blocks.each do |block| block.active = false end
     end  
 	
 	  def rotate_clockwise;         rotate( 1)      end     
@@ -1893,42 +1978,39 @@ module GGZiron_Tetris
   
   class Building_Block
     
-    attr_accessor :on_fall
-    attr_reader   :x, :y, :value
+    attr_accessor :active
+    attr_reader   :x, :y, :color_id
     
     def initialize(field, x, y)
       @field = field
       create_rect(x, y)
-      @on_fall = false
-      self.value = 0 
+      @active = false
+      self.color_id = 0 
     end
     
     def create_rect(x, y)
       @rect = Rect.new
       self.x = x; self.y = y
-      @rect.height = block_size
-      @rect.width = block_size
+      @rect.height = BLOCK_SIZE
+      @rect.width = BLOCK_SIZE
     end  
     
-    def value=(value)
-      @value = value
-      @value = 0 unless @value.between?(0 ,7)
-      color = Tetris_Process::generate_color(COLORS[@value])
-      @field.bitmap.fill_rect( @rect, color)
+    def color_id=(value)
+      @color_id = value
+      @color_id = 0 unless @color_id.between?(0 ,7)
+      color = Tetris_Process::generate_color(@color_id)
+      @field.bitmap.fill_rect(@rect, color)
     end 
     
     def x=(value) 
       @x = value
-      @rect.x = value * ( block_size + block_distance) 
+      @rect.x = value * Tetris_Process.block_size_with_border
     end
     
     def y=(value) 
       @y = value 
-      @rect.y = value * ( block_size + block_distance) 
+      @rect.y = value * Tetris_Process.block_size_with_border
     end
-
-    def block_size;     BLOCK_SIZE;      end  
-    def block_distance; BLOCKS_DISTANCE; end     
 	
   end  #Building_Block
     
