@@ -69,7 +69,7 @@ module GGZiron_Tetris
     more effective.
    *Renamed the menu button for playing Tetris, so it does not use the
     word "Tetris".
-  1.3.0 Released on 07/08/2019
+  1.3.0 Released on 10/08/2019
    *New feature: Highligh deletion row. Comes with extra settings for it,
     including new color entry in the COLORS.
    *Added option that BGM and BGS position from normal RPG game not to be 
