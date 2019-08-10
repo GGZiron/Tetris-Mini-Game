@@ -57,3 +57,20 @@
     more effective.
    *Renamed the menu button for playing Tetris, so it does not use the
     word "Tetris".
+   1.3.0 Released on 10/08/2019
+   *New feature: Highligh deletion row. Comes with extra settings for it,
+    including new color entry in the COLORS.
+   *Added option that BGM and BGS position from normal RPG game not to be 
+    restored, so tracks would replay from begining. By default, now they won't
+    recover position, but can be changed.
+   *Added option to modify the clearing rectangle (to add or substract to
+    original values), so there are not uncleaned pixels on stats change.
+    Stats are the level, actions, scores, etc. On default font no need to
+    modify, but you might need if you set different fonts.
+   *Fixed bug that came with version 1.2.0: crash client when trying to rotate
+    too close to obstacle. 
+   *Fixed bug, which would draw next Tetromino on resume, doing that each time
+    the player resumes the game. Bug game with version 1.2.0.
+   *Cleared bug, which would lead to crash if developer decides not to include 
+    background picture. Bug came with version 1.2.0 too.
+   *Small optimisations of the code. 
