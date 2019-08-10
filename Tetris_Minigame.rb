@@ -82,7 +82,7 @@ module GGZiron_Tetris
    *Fixed bug that came with version 1.2.0: crash client when trying to rotate
     too close to obstacle. 
    *Fixed bug, which would draw next Tetromino on resume, doing that each time
-    the player resumes the game. Bug game with version 1.2.0.
+    the player resumes the game. Bug came with version 1.2.0.
    *Cleared bug, which would lead to crash if developer decides not to include 
     background picture. Bug came with version 1.2.0 too.
    *Small optimisations of the code. 
