@@ -1,6 +1,6 @@
 Full description of the script: https://forums.rpgmakerweb.com/index.php?threads/tetris-mini-game.110592/ 
 
-Current version: 1.1.2
+Current version: 1.3.0
 
 Terms of use: Free for commercial and non commercial projects*. 
 Free to edit, but keep my part of the header, and don't claim the script is yours. 
