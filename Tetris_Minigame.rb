@@ -7,7 +7,7 @@ module GGZiron_Tetris
  Author: GGZiron.
  Name: Tetris Mini Game
  Engine: RPG Maker VX ACE
- Version 1.3.0
+ Version 1.3.1
  Terms of use: Free for comercial and non comercial project. * 
  Free to edit, but keep my part of the header, and don't claim the 
  script is yours. You have to credit me as GGZiron.
@@ -85,7 +85,10 @@ module GGZiron_Tetris
     the player resumes the game. Bug came with version 1.2.0.
    *Cleared bug, which would lead to crash if developer decides not to include 
     background picture. Bug came with version 1.2.0 too.
-   *Small optimisations of the code. 
+   *Small optimisations of the code.
+ 1.3.1 Released on 13/12/2020
+   *Now background saved background sound should be restored too, after done
+    with tetris game.
     
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
  That happens on it's own scene.
@@ -1283,7 +1286,7 @@ module GGZiron_Tetris
     def restore_bgm
       rbbp = GGZiron_Tetris::REMEMBER_BGM_BGS_POS
       (rbbp ? @saved_bgm.replay : @saved_bgm.play) if @saved_bgm
-      (rbbp ? @saved_bgs.replay : @saved_bgm.play) if @saved_bgs
+      (rbbp ? @saved_bgs.replay : @saved_bgs.play) if @saved_bgs
     end  
     
     def dispose_main_viewport;                end
