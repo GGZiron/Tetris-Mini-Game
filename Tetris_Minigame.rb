@@ -87,7 +87,7 @@ module GGZiron_Tetris
     background picture. Bug came with version 1.2.0 too.
    *Small optimisations of the code.
  1.3.1 Released on 13/12/2020
-   *Now background saved background sound should be restored too, after done
+   *Now saved background sound should be restored too, after done
     with tetris game.
     
  Script Purpose: Adds the game Tetris as minigame into your RPG maker game.
